@@ -438,46 +438,7 @@
                 <div id="cart-count">0 ta mahsulot</div>
                 <div id="cart-total">0 so'm</div>
             </div>
-            <button class="cart-btn" onclick="showOrderForm()">Buyurtma berish</button>
-        </div>
-    </div>
-
-    <!-- Order Form Modal -->
-    <div class="order-modal hidden" id="order-modal">
-        <div class="order-form">
-            <h3>📋 Buyurtma ma'lumotlari</h3>
-            
-            <!-- Order Summary -->
-            <div class="order-summary" id="order-summary-modal">
-                <!-- Will be filled by JavaScript -->
-            </div>
-            
-            <!-- Phone Number -->
-            <div class="form-group">
-                <label for="phone">📱 Telefon raqam *</label>
-                <input type="tel" id="phone" placeholder="+998 90 123 45 67" required>
-            </div>
-            
-            <!-- Address -->
-            <div class="form-group">
-                <label for="address">📍 Manzil *</label>
-                <div class="location-group">
-                    <input type="text" id="address" placeholder="Manzilingizni kiriting" required>
-                    <button type="button" class="location-btn" onclick="getLocation()">📍 GPS</button>
-                </div>
-            </div>
-            
-            <!-- Comment -->
-            <div class="form-group">
-                <label for="comment">💬 Izoh (ixtiyoriy)</label>
-                <textarea id="comment" placeholder="Masalan: 3-qavat, 12-xonadon. Kamroq tuz..."></textarea>
-            </div>
-            
-            <!-- Actions -->
-            <div class="form-actions">
-                <button type="button" class="btn-cancel" onclick="hideOrderForm()">Bekor qilish</button>
-                <button type="button" class="btn-submit" onclick="submitOrder()">Buyurtma berish</button>
-            </div>
+            <button class="cart-btn" onclick="submitOrder()">Buyurtma berish</button>
         </div>
     </div>
 
@@ -719,7 +680,7 @@
                     tg.MainButton.setText(`Buyurtma berish — ${formatPrice(totalPrice)} so'm`);
                     tg.MainButton.show();
                     tg.MainButton.color = '#007AFF';
-                    tg.MainButton.onClick(showOrderForm);
+                    tg.MainButton.onClick(submitOrder);
                 }
             } else {
                 cartSummary.classList.add('hidden');
@@ -828,31 +789,6 @@
                 return;
             }
             
-            // Validate form
-            const phone = document.getElementById('phone').value.trim();
-            const address = document.getElementById('address').value.trim();
-            const comment = document.getElementById('comment').value.trim();
-            
-            if (!phone) {
-                alert('Telefon raqamni kiriting');
-                document.getElementById('phone').focus();
-                return;
-            }
-            
-            if (!address) {
-                alert('Manzilni kiriting yoki GPS orqali aniqlang');
-                document.getElementById('address').focus();
-                return;
-            }
-            
-            // Validate phone format (basic)
-            const phoneRegex = /^[\+]?[0-9\s\-\(\)]{9,}$/;
-            if (!phoneRegex.test(phone)) {
-                alert('Telefon raqam noto\'g\'ri formatda. Masalan: +998901234567');
-                document.getElementById('phone').focus();
-                return;
-            }
-            
             const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             
             const orderData = {
@@ -863,37 +799,24 @@
                     quantity: item.quantity
                 })),
                 total: totalPrice,
-                phone: phone,
-                address: address,
-                comment: comment,
+                comment: '', // Bot orqali so'raladi
                 timestamp: new Date().toISOString()
             };
             
             console.log('📤 Submitting order:', orderData);
             
             try {
-                // Hide modal first
-                hideOrderForm();
-                
-                // Show success message
-                alert('✅ Buyurtma yuborildi! Tez orada siz bilan bog\'lanamiz.');
-                
-                // Send to Telegram
+                // Send to Telegram - WebApp yopiladi va bot davom etadi
                 if (tg) {
                     tg.sendData(JSON.stringify(orderData));
                 } else {
-                    console.log('Telegram WebApp not available, order data:', orderData);
+                    alert('Buyurtma yuborildi: ' + formatPrice(totalPrice) + ' so\'m');
                 }
                 
-                // Clear cart and form
+                // Clear cart
                 cart = {};
                 updateCartUI();
                 renderMenu();
-                
-                // Clear form
-                document.getElementById('phone').value = '';
-                document.getElementById('address').value = '';
-                document.getElementById('comment').value = '';
                 
             } catch (error) {
                 console.error('❌ Order submission error:', error);
