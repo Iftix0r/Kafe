@@ -199,20 +199,18 @@ if (isset($message['contact'])) {
     }
     
     $text = "✅ Ro'yxatdan o'tdingiz!\n\n";
-    $text .= "Menuni ochish uchun tugmani bosing:";
+    $text .= "👇 Menuni ochish uchun pastdagi tugmani bosing:";
     
+    // IMPORTANT: web_app must be in regular keyboard (not inline_keyboard)
+    // because tg.sendData() only works with regular keyboard web apps
     $keyboard = [
-        'inline_keyboard' => [[
+        'keyboard' => [[
             ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL]]
-        ]]
+        ]],
+        'resize_keyboard' => true,
     ];
     
     sendTelegramMessage($chatId, $text, $keyboard);
-    
-    // Also remove the regular keyboard
-    sendTelegramMessage($chatId, "👇 Menyuni pastdagi tugma orqali oching", [
-        'remove_keyboard' => true
-    ]);
     exit;
 }
 
@@ -392,11 +390,12 @@ if (isset($message['text'])) {
                 
                 $finalSummary .= "\n⏰ Vaqt: " . date('d.m.Y H:i');
                 
-                // Send to customer
+                // Send to customer - use regular keyboard for web_app
                 $keyboard = [
-                    'inline_keyboard' => [[
+                    'keyboard' => [[
                         ['text' => '🍽 Yangi buyurtma', 'web_app' => ['url' => WEBAPP_URL]]
-                    ]]
+                    ]],
+                    'resize_keyboard' => true,
                 ];
                 
                 $customerResponse = sendTelegramMessage($chatId, 
@@ -420,9 +419,10 @@ if (isset($message['text'])) {
                 unlink($sessionFile);
                 
                 $keyboard = [
-                    'inline_keyboard' => [[
+                    'keyboard' => [[
                         ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL]]
-                    ]]
+                    ]],
+                    'resize_keyboard' => true,
                 ];
                 
                 sendTelegramMessage($chatId, "❌ Buyurtma bekor qilindi.\n\nYangi buyurtma berish uchun menyuni oching 👇", $keyboard);
@@ -443,9 +443,10 @@ if (isset($message['text'])) {
         logMessage("No active session, treating as regular message");
         
         $keyboard = [
-            'inline_keyboard' => [[
+            'keyboard' => [[
                 ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL]]
-            ]]
+            ]],
+            'resize_keyboard' => true,
         ];
         
         sendTelegramMessage($chatId, "Buyurtma berish uchun menyuni oching 👇", $keyboard);
