@@ -127,14 +127,14 @@ $phpTgId = $_GET['tg_id'] ?? '';
                     
                     const phpTgId = "<?= htmlspecialchars($phpTgId) ?>";
                     if (!u && phpTgId) {
-                        u = { id: phpTgId, first_name: 'Yuklanmoqda...' }; 
+                        u = { id: phpTgId, first_name: '' }; 
                         source = "PHP-ID";
                     }
 
                     if (!u) {
                         const urlParams = new URLSearchParams(window.location.search);
                         const tid = urlParams.get('tg_id');
-                        if (tid) { u = { id: tid, first_name: 'Yuklanmoqda...' }; source = "URL-ID"; }
+                        if (tid) { u = { id: tid, first_name: '' }; source = "URL-ID"; }
                     }
 
                     if (!u) {
@@ -144,7 +144,13 @@ $phpTgId = $_GET['tg_id'] ?? '';
                     }
 
                     if (log) log.textContent = `Sinxronizatsiya (${source}: ${u.id})...`;
-                    if (uName && u.first_name) uName.textContent = u.first_name;
+                    if (uName) {
+                        if (u.first_name && u.first_name !== '') {
+                            uName.textContent = u.first_name;
+                        } else {
+                            uName.textContent = 'Yuklanmoqda...';
+                        }
+                    }
                     if (dbg) dbg.textContent = `ID: ${u.id} | v6.7`;
                     
                     if (u.photo_url) {
@@ -171,7 +177,11 @@ $phpTgId = $_GET['tg_id'] ?? '';
                             
                             // LIVE FETCH: Name
                             const liveName = [resData.user.first_name, resData.user.last_name].filter(Boolean).join(' ');
-                            if (liveName && uName) uName.textContent = liveName;
+                            if (liveName && uName) {
+                                uName.textContent = liveName;
+                            } else if (uName && !liveName) {
+                                uName.textContent = 'Ism topilmadi';
+                            }
                             
                             // LIVE FETCH: Avatar
                             if (resData.user.photo_url) {
@@ -181,11 +191,13 @@ $phpTgId = $_GET['tg_id'] ?? '';
                             if (log) log.innerHTML = `Muvaffaqiyatli ulangan! ✅<br><small style="opacity:0.5">${rawDump}</small>`;
                         } else {
                             if (uPhone) uPhone.textContent = "Bazada yo'q";
+                            if (uName) uName.textContent = "Ism topilmadi";
                             if (log) log.textContent = "Siz bazada yo'qsiz. Telefoningizni yuboring.";
                         }
                     } catch(err) {
                         if (log) log.innerHTML = `API Xato.<br><small style="opacity:0.5">${rawDump}</small>`;
                         if (uPhone) uPhone.textContent = "Net Error";
+                        if (uName) uName.textContent = "Yuklanmadi";
                     }
                 } catch (err) { const log = document.getElementById('dbg-log'); if(log) log.textContent = "JS Error: " + err.message; }
             }
