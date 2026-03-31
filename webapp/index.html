@@ -10,6 +10,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <!-- Telegram WebApp Script -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
@@ -19,7 +22,7 @@
     <!-- Loading Screen -->
     <div id="loading-screen" class="loading-screen">
         <div class="loading-content">
-            <div class="loading-logo">☕</div>
+            <div class="loading-logo"><i class="fas fa-utensils"></i></div>
             <div class="loading-spinner"></div>
             <div class="loading-text">Yuklanmoqda...</div>
         </div>
@@ -31,7 +34,7 @@
         <header class="header">
             <div class="header-content">
                 <div class="header-title">
-                    <span id="header-emoji" class="header-emoji">🍽️</span>
+                    <span id="header-emoji" class="header-emoji"><i class="fas fa-utensils"></i></span>
                     <span id="header-text" class="header-text">Menyu</span>
                 </div>
                 <div class="header-actions">
@@ -52,14 +55,14 @@
             </div>
             <div class="comment-section">
                 <div class="comment-container">
-                    <span class="comment-icon">💬</span>
+                    <span class="comment-icon"><i class="fas fa-comment"></i></span>
                     <textarea id="comment" placeholder="Buyurtma uchun izoh (ixtiyoriy)..." maxlength="200"></textarea>
                     <div class="comment-counter"><span id="comment-count">0</span>/200</div>
                 </div>
             </div>
             <div id="menu-checkout-footer" class="checkout-footer hidden">
                 <button class="primary-btn checkout-btn" onclick="app.submitOrder()">
-                    🛒 Buyurtma berish — <span id="menu-total-price">0</span> so'm
+                    <i class="fas fa-shopping-cart"></i> Buyurtma berish — <span id="menu-total-price">0</span> so'm
                 </button>
             </div>
         </main>
@@ -72,7 +75,7 @@
                     <!-- Cart items will be injected here -->
                 </div>
                 <div id="cart-empty" class="cart-empty hidden">
-                    <div class="empty-icon">🛒</div>
+                    <div class="empty-icon"><i class="fas fa-shopping-cart"></i></div>
                     <h3>Savat bo'sh</h3>
                     <p>Hali hech narsa tanlamadingiz</p>
                     <button class="primary-btn" onclick="app.switchTab('menu')">Menyoga qaytish</button>
@@ -88,7 +91,7 @@
                     </div>
                     <div style="display: flex; gap: 12px; margin-top: 16px;">
                         <button class="secondary-btn" onclick="app.clearCart()" style="flex: 1;">
-                            🗑️ Tozalash
+                            <i class="fas fa-trash"></i> Tozalash
                         </button>
                         <button class="primary-btn checkout-btn" onclick="app.submitOrder()" style="flex: 2;">
                             Buyurtmani tasdiqlash
@@ -103,7 +106,7 @@
             <div class="main-content">
                 <h2 class="section-title">Mening profilim</h2>
                 <div id="user-profile-card" class="profile-card">
-                    <div class="profile-avatar" id="user-avatar">👤</div>
+                    <div class="profile-avatar" id="user-avatar"><i class="fas fa-user"></i></div>
                     <div class="profile-info">
                         <h3 id="user-full-name">Foydalanuvchi</h3>
                         <p id="user-telegram-id">ID: @username</p>
@@ -112,22 +115,22 @@
                 
                 <div class="profile-sections">
                     <div class="profile-item" onclick="app.switchTab('orders')">
-                        <span class="item-icon">📦</span>
+                        <span class="item-icon"><i class="fas fa-box"></i></span>
                         <div class="item-text">
                             <h4>Buyurtmalarim</h4>
                             <p>Barcha buyurtmalar tarixi</p>
                         </div>
-                        <span class="item-arrow">›</span>
+                        <span class="item-arrow"><i class="fas fa-chevron-right"></i></span>
                     </div>
                     <div class="profile-item">
-                        <span class="item-icon">⚙️</span>
+                        <span class="item-icon"><i class="fas fa-cog"></i></span>
                         <div class="item-text">
                             <h4>Sozlamalar</h4>
                             <p>Ilova tilini o'zgartirish</p>
                         </div>
                     </div>
                     <div class="profile-item">
-                        <span class="item-icon">📞</span>
+                        <span class="item-icon"><i class="fas fa-phone"></i></span>
                         <div class="item-text">
                             <h4>Yordam</h4>
                             <p>Biz bilan bog'lanish</p>
@@ -141,14 +144,14 @@
         <main id="view-orders" class="view">
             <div class="main-content">
                 <div class="orders-header">
-                    <button class="back-btn" onclick="app.switchTab('profile')">‹ Orqaga</button>
+                    <button class="back-btn" onclick="app.switchTab('profile')"><i class="fas fa-chevron-left"></i> Orqaga</button>
                     <h2 class="section-title">Buyurtmalarim</h2>
                 </div>
                 <div id="orders-list" class="orders-list">
                     <!-- Orders will be loaded here -->
                 </div>
                 <div id="orders-empty" class="orders-empty hidden">
-                    <div class="empty-icon">📦</div>
+                    <div class="empty-icon"><i class="fas fa-box"></i></div>
                     <h3>Buyurtmalar yo'q</h3>
                     <p>Hali hech qanday buyurtma bermadingiz</p>
                     <button class="primary-btn" onclick="app.switchTab('menu')">Buyurtma berish</button>
@@ -159,7 +162,7 @@
         <!-- Success Animation -->
         <div id="success-animation" class="success-animation hidden">
             <div class="success-content">
-                <div class="success-checkmark">✅</div>
+                <div class="success-checkmark"><i class="fas fa-check-circle"></i></div>
                 <div class="success-text">Buyurtmangiz qabul qilindi!</div>
             </div>
         </div>
@@ -167,15 +170,15 @@
         <!-- Bottom Navigation -->
         <nav class="bottom-nav">
             <button class="nav-item active" onclick="app.switchTab('menu')" id="nav-menu">
-                <span class="nav-icon">🍽️</span>
+                <span class="nav-icon"><i class="fas fa-utensils"></i></span>
                 <span class="nav-label">Menyu</span>
             </button>
             <button class="nav-item" onclick="app.switchTab('cart')" id="nav-cart">
-                <span class="nav-icon">🛒</span>
+                <span class="nav-icon"><i class="fas fa-shopping-cart"></i></span>
                 <span class="nav-label">Savat</span>
             </button>
             <button class="nav-item" onclick="app.switchTab('profile')" id="nav-profile">
-                <span class="nav-icon">👤</span>
+                <span class="nav-icon"><i class="fas fa-user"></i></span>
                 <span class="nav-label">Profil</span>
             </button>
         </nav>

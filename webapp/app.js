@@ -127,10 +127,15 @@ class KafeApp {
 
     updateHeader() {
         const texts = { menu: 'Menyu', cart: 'Savat', profile: 'Profil', orders: 'Buyurtmalarim' };
-        const emojis = { menu: '🍽️', cart: '🛒', profile: '👤', orders: '📦' };
+        const icons = { 
+            menu: '<i class="fas fa-utensils"></i>', 
+            cart: '<i class="fas fa-shopping-cart"></i>', 
+            profile: '<i class="fas fa-user"></i>', 
+            orders: '<i class="fas fa-box"></i>' 
+        };
         
         document.getElementById('header-text').textContent = texts[this.currentView];
-        document.getElementById('header-emoji').textContent = emojis[this.currentView];
+        document.getElementById('header-emoji').innerHTML = icons[this.currentView];
     }
 
     renderCategories() {
@@ -180,7 +185,7 @@ class KafeApp {
         const qty = this.cart[item.id]?.quantity || 0;
         
         card.innerHTML = `
-            ${item.image_url ? `<img src="${item.image_url}" alt="${item.name}" loading="lazy">` : `<div class="no-img">🍽️</div>`}
+            ${item.image_url ? `<img src="${item.image_url}" alt="${item.name}" loading="lazy">` : `<div class="no-img"><i class="fas fa-utensils"></i></div>`}
             <div class="item-info">
                 <div class="item-name">${item.name}</div>
                 ${item.description ? `<div class="item-desc">${item.description}</div>` : ''}
@@ -289,7 +294,7 @@ class KafeApp {
                 const row = document.createElement('div');
                 row.className = 'cart-item';
                 row.innerHTML = `
-                    ${itemData?.image_url ? `<img src="${itemData.image_url}" class="cart-item-img">` : `<div class="cart-item-img no-img" style="font-size:1.5rem">🍽️</div>`}
+                    ${itemData?.image_url ? `<img src="${itemData.image_url}" class="cart-item-img">` : `<div class="cart-item-img no-img" style="font-size:1.5rem"><i class="fas fa-utensils"></i></div>`}
                     <div class="cart-item-info">
                         <div class="cart-item-name">${item.name}</div>
                         <div class="cart-item-price">${this.formatPrice(item.price)} so'm</div>

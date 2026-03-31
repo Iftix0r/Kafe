@@ -10,6 +10,8 @@ $phpTgId = $_GET['tg_id'] ?? '';
     <title>Olmazor Go</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --p:#2481cc; --bg:#fff; --t:#1a1c1e; --sec:#f4f4f7; --r:20px; }
         * { margin:0; padding:0; box-sizing:border-box; font-family:'Outfit',sans-serif; -webkit-tap-highlight-color:transparent; }
@@ -46,7 +48,7 @@ $phpTgId = $_GET['tg_id'] ?? '';
 </head>
 <body>
     <div id="ls">
-        <div class="pulse">🍽️</div>
+        <div class="pulse"><i class="fas fa-utensils"></i></div>
         <div id="ls-text" style="margin-top:20px; font-weight:800; opacity:0.3; font-size:0.9rem">v6.7 LIVE FETCH 🚀</div>
     </div>
     <div id="err-box" onclick="this.style.display='none'"></div>
@@ -57,7 +59,7 @@ $phpTgId = $_GET['tg_id'] ?? '';
     <main id="v-cart" class="view">
         <h2 style="margin-bottom:20px;font-weight:800">Savat</h2>
         <div id="cart-list"></div>
-        <div id="cart-empty" class="hidden" style="text-align:center;padding:50px;opacity:0.6">🛒 Bo'sh</div>
+        <div id="cart-empty" class="hidden" style="text-align:center;padding:50px;opacity:0.6"><i class="fas fa-shopping-cart" style="font-size:4rem;margin-bottom:16px;display:block"></i> Bo'sh</div>
         <div id="cart-foot" class="hidden">
             <textarea id="note" placeholder="Izoh..." style="width:100%;padding:18px;border:none;background:var(--sec);border-radius:20px;margin:20px 0;min-height:90px;"></textarea>
             <div style="padding:22px;background:var(--sec);border-radius:25px;display:flex;justify-content:space-between;font-weight:800">Jami: <span id="total-val" style="color:var(--p)">0</span></div>
@@ -66,35 +68,35 @@ $phpTgId = $_GET['tg_id'] ?? '';
     </main>
     <main id="v-prof" class="view">
         <div class="hero">
-            <div class="avatar" id="u-avatar">👤</div>
+            <div class="avatar" id="u-avatar"><i class="fas fa-user"></i></div>
             <h2 id="u-name">Mehmon</h2>
             <div id="u-dbg" style="opacity:0.6;font-size:0.8rem;margin-top:8px">v6.7</div>
         </div>
         <div style="padding:20px;background:var(--sec);border-radius:22px;font-weight:700;margin-bottom:15px;cursor:pointer" onclick="app.tab('orders')">
-            📦 Buyurtmalarim <span style="float:right;color:var(--p)">›</span>
+            <i class="fas fa-box"></i> Buyurtmalarim <span style="float:right;color:var(--p)"><i class="fas fa-chevron-right"></i></span>
         </div>
-        <div style="padding:20px;background:var(--sec);border-radius:22px;font-weight:700">📞 Tel: <span id="u-phone" style="float:right;color:var(--p)">-</span></div>
-        <button onclick="app.sync(true)" style="width:100%;padding:20px;background:var(--p);color:#fff;border:none;border-radius:22px;margin-top:15px;font-weight:800">Yangilash 🔄</button>
+        <div style="padding:20px;background:var(--sec);border-radius:22px;font-weight:700"><i class="fas fa-phone"></i> Tel: <span id="u-phone" style="float:right;color:var(--p)">-</span></div>
+        <button onclick="app.sync(true)" style="width:100%;padding:20px;background:var(--p);color:#fff;border:none;border-radius:22px;margin-top:15px;font-weight:800"><i class="fas fa-sync"></i> Yangilash</button>
         <div id="dbg-log" style="font-size:0.6rem; color:#aaa; text-align:center; padding:20px; word-break: break-all;">Starting...</div>
     </main>
     <main id="v-orders" class="view">
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
-            <button onclick="app.tab('prof')" style="background:none;border:none;font-size:1.5rem;color:var(--p);cursor:pointer;padding:8px">‹</button>
+            <button onclick="app.tab('prof')" style="background:none;border:none;font-size:1.5rem;color:var(--p);cursor:pointer;padding:8px"><i class="fas fa-chevron-left"></i></button>
             <h2 style="font-weight:800">Buyurtmalarim</h2>
         </div>
         <div id="orders-list"></div>
         <div id="orders-empty" class="hidden" style="text-align:center;padding:50px;opacity:0.6">
-            <div style="font-size:4rem;margin-bottom:16px">📦</div>
+            <div style="font-size:4rem;margin-bottom:16px"><i class="fas fa-box"></i></div>
             <h3>Buyurtmalar yo'q</h3>
             <p>Hali hech qanday buyurtma bermadingiz</p>
             <button onclick="app.tab('menu')" style="padding:12px 24px;background:var(--p);color:#fff;border:none;border-radius:12px;margin-top:16px;font-weight:600">Buyurtma berish</button>
         </div>
     </main>
-    <div id="float" class="float-btn hidden" onclick="app.tab('cart')">🛒 Savatga o'tish → <span id="float-sum">0</span></div>
+    <div id="float" class="float-btn hidden" onclick="app.tab('cart')"><i class="fas fa-shopping-cart"></i> Savatga o'tish → <span id="float-sum">0</span></div>
     <nav class="nav">
-        <div class="nav-tab active" id="n-menu" onclick="app.tab('menu')">🍽️<br>Menyu</div>
-        <div class="nav-tab" id="n-cart" onclick="app.tab('cart')">🛒<br>Savat<div id="badge" class="badge hidden">0</div></div>
-        <div class="nav-tab" id="n-prof" onclick="app.tab('prof')">👤<br>Profil</div>
+        <div class="nav-tab active" id="n-menu" onclick="app.tab('menu')"><i class="fas fa-utensils"></i><br>Menyu</div>
+        <div class="nav-tab" id="n-cart" onclick="app.tab('cart')"><i class="fas fa-shopping-cart"></i><br>Savat<div id="badge" class="badge hidden">0</div></div>
+        <div class="nav-tab" id="n-prof" onclick="app.tab('prof')"><i class="fas fa-user"></i><br>Profil</div>
     </nav>
 
     <script>
