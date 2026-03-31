@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test WebApp</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .menu-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .item-info h3 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+        }
+        
+        .item-price {
+            color: #007AFF;
+            font-weight: bold;
+        }
+        
+        .add-btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        .cart {
+            background: #e3f2fd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .total {
+            font-weight: bold;
+            font-size: 18px;
+            color: #007AFF;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+        
+        .submit-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+        }
+        
+        .submit-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .debug {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 20px;
+            font-size: 12px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🍽 Test Menyu</h2>
+        
+        <div class="menu-item">
+            <div class="item-info">
+                <h3>Osh</h3>
+                <div class="item-price">35,000 so'm</div>
+            </div>
+            <button class="add-btn" onclick="addItem('osh', 35000)">Qo'shish</button>
+        </div>
+        
+        <div class="menu-item">
+            <div class="item-info">
+                <h3>Choy</h3>
+                <div class="item-price">5,000 so'm</div>
+            </div>
+            <button class="add-btn" onclick="addItem('choy', 5000)">Qo'shish</button>
+        </div>
+        
+        <div class="cart" id="cart" style="display: none;">
+            <h3>🛒 Savat</h3>
+            <div id="cart-items"></div>
+            <div class="total" id="total">Jami: 0 so'm</div>
+            <button class="submit-btn" id="submit-btn" onclick="submitOrder()">Buyurtma berish</button>
+        </div>
+        
+        <div class="debug" id="debug">Debug ma'lumotlari...</div>
+    </div>
+
+    <script>
+        let tg = window.Telegram?.WebApp;
+        let cart = {};
+        
+        function log(message) {
+            const debug = document.getElementById('debug');
+            const timestamp = new Date().toLocaleTimeString();
+            debug.textContent += `[${timestamp}] ${message}\n`;
+            console.log(message);
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            log('WebApp starting...');
+            
+            if (tg) {
+                log(`Telegram WebApp found: ${tg.version}`);
+                log(`Platform: ${tg.platform}`);
+                log(`sendData available: ${typeof tg.sendData === 'function'}`);
+                log(`close available: ${typeof tg.close === 'function'}`);
+                
+                tg.ready();
+                tg.expand();
+                
+                // Configure main button
+                if (tg.MainButton) {
+                    tg.MainButton.setText('Buyurtma berish');
+                    tg.MainButton.color = '#28a745';
+                    tg.MainButton.onClick(submitOrder);
+                    log('Main button configured');
+                }
+                
+                log('Telegram WebApp initialized');
+            } else {
+                log('Telegram WebApp not available - browser mode');
+            }
+        });
+        
+        function addItem(name, price) {
+            if (cart[name]) {
+                cart[name].quantity++;
+            } else {
+                cart[name] = { name, price, quantity: 1 };
+            }
+            
+            log(`Added ${name} to cart`);
+            updateCart();
+        }
+        
+        function updateCart() {
+            const cartDiv = document.getElementById('cart');
+            const cartItems = document.getElementById('cart-items');
+            const totalDiv = document.getElementById('total');
+            
+            const items = Object.values(cart);
+            
+            if (items.length === 0) {
+                cartDiv.style.display = 'none';
+                if (tg && tg.MainButton) {
+                    tg.MainButton.hide();
+                }
+                return;
+            }
+            
+            cartDiv.style.display = 'block';
+            
+            cartItems.innerHTML = '';
+            let total = 0;
+            
+            items.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                
+                const div = document.createElement('div');
+                div.className = 'cart-item';
+                div.innerHTML = `
+                    <span>${item.name} × ${item.quantity}</span>
+                    <span>${itemTotal.toLocaleString()} so'm</span>
+                `;
+                cartItems.appendChild(div);
+            });
+            
+            totalDiv.textContent = `Jami: ${total.toLocaleString()} so'm`;
+            
+            // Update main button
+            if (tg && tg.MainButton) {
+                tg.MainButton.setText(`Buyurtma berish — ${total.toLocaleString()} so'm`);
+                tg.MainButton.show();
+            }
+            
+            log(`Cart updated: ${items.length} items, total: ${total}`);
+        }
+        
+        function submitOrder() {
+            const items = Object.values(cart);
+            if (items.length === 0) {
+                alert('Savat bo\'sh');
+                return;
+            }
+            
+            const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            const orderData = {
+                items: items.map(item => ({
+                    menu_item_id: Math.floor(Math.random() * 100), // Random ID for test
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity
+                })),
+                total: total,
+                timestamp: new Date().toISOString()
+            };
+            
+            log('Submitting order...');
+            log(`Order data: ${JSON.stringify(orderData, null, 2)}`);
+            
+            // Disable button
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Yuborilmoqda...';
+            
+            if (tg && tg.MainButton) {
+                tg.MainButton.setText('Yuborilmoqda...');
+                tg.MainButton.showProgress();
+            }
+            
+            try {
+                if (tg && typeof tg.sendData === 'function') {
+                    log('Sending data via Telegram WebApp...');
+                    tg.sendData(JSON.stringify(orderData));
+                    log('Data sent successfully');
+                    
+                    // Try to close after delay
+                    setTimeout(() => {
+                        if (tg.close) {
+                            log('Attempting to close WebApp...');
+                            tg.close();
+                        }
+                    }, 1000);
+                    
+                } else {
+                    log('ERROR: Telegram WebApp sendData not available');
+                    alert('Telegram WebApp ishlamayapti.\n\nTest ma\'lumotlari:\n' + 
+                          JSON.stringify(orderData, null, 2));
+                }
+                
+            } catch (error) {
+                log(`ERROR: ${error.message}`);
+                alert('Xatolik: ' + error.message);
+                
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Buyurtma berish';
+                
+                if (tg && tg.MainButton) {
+                    tg.MainButton.setText('Buyurtma berish');
+                    tg.MainButton.hideProgress();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

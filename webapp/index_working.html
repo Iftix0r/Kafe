@@ -460,14 +460,32 @@
         
         function initTelegram() {
             if (tg) {
+                console.log('Telegram WebApp object:', tg);
+                console.log('WebApp version:', tg.version);
+                console.log('Platform:', tg.platform);
+                
                 tg.ready();
                 tg.expand();
                 tg.setBackgroundColor('#f5f5f5');
                 tg.setHeaderColor('#ffffff');
-                tg.MainButton.onClick(submitOrder);
+                
+                // Enable closing confirmation
+                tg.enableClosingConfirmation();
+                
+                // Set up main button
+                if (tg.MainButton) {
+                    tg.MainButton.setText('Buyurtma berish');
+                    tg.MainButton.color = '#007AFF';
+                    tg.MainButton.textColor = '#FFFFFF';
+                    tg.MainButton.onClick(submitOrder);
+                    console.log('Main button configured');
+                }
+                
                 console.log('Telegram WebApp ready');
+                console.log('sendData available:', typeof tg.sendData === 'function');
+                console.log('close available:', typeof tg.close === 'function');
             } else {
-                console.log('Telegram WebApp not available');
+                console.log('Telegram WebApp not available - running in browser mode');
             }
         }
         
@@ -808,23 +826,57 @@
             
             try {
                 // Send to Telegram - WebApp yopiladi va bot davom etadi
-                if (tg) {
+                if (tg && tg.sendData) {
                     console.log('📱 Sending via Telegram WebApp...');
+                    
+                    // Show loading state
+                    const cartBtn = document.querySelector('.cart-btn');
+                    if (cartBtn) {
+                        cartBtn.textContent = 'Yuborilmoqda...';
+                        cartBtn.disabled = true;
+                    }
+                    
+                    // Update main button
+                    if (tg.MainButton) {
+                        tg.MainButton.setText('Yuborilmoqda...');
+                        tg.MainButton.showProgress();
+                    }
+                    
+                    // Send data and close
                     tg.sendData(JSON.stringify(orderData));
+                    
+                    // Force close after a short delay
+                    setTimeout(() => {
+                        if (tg.close) {
+                            tg.close();
+                        }
+                    }, 500);
+                    
                     console.log('✅ Data sent to Telegram');
                 } else {
-                    console.log('❌ Telegram WebApp not available');
-                    alert('Telegram WebApp mavjud emas. Debug: ' + JSON.stringify(orderData));
+                    console.log('❌ Telegram WebApp not available or sendData not supported');
+                    
+                    // Fallback: show alert with order data
+                    alert('Telegram WebApp mavjud emas.\n\nBuyurtma ma\'lumotlari:\n' + 
+                          items.map(item => `${item.name} x${item.quantity}`).join('\n') + 
+                          `\n\nJami: ${formatPrice(totalPrice)} so'm`);
                 }
-                
-                // Clear cart
-                cart = {};
-                updateCartUI();
-                renderMenu();
                 
             } catch (error) {
                 console.error('❌ Order submission error:', error);
                 alert('Buyurtma yuborishda xatolik: ' + error.message);
+                
+                // Reset button state
+                const cartBtn = document.querySelector('.cart-btn');
+                if (cartBtn) {
+                    cartBtn.textContent = 'Buyurtma berish';
+                    cartBtn.disabled = false;
+                }
+                
+                if (tg && tg.MainButton) {
+                    tg.MainButton.setText('Buyurtma berish');
+                    tg.MainButton.hideProgress();
+                }
             }
         }
         
