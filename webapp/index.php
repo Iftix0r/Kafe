@@ -121,14 +121,14 @@
                 let u = this.tg?.initDataUnsafe?.user;
                 let src = "Bridge";
 
-                if(!u && this.tg?.initData) { try { u = JSON.parse(new URLSearchParams(this.tg.initData).get('user')); src="Raw"; } catch(e){} }
-                if(!u) { const p = new URLSearchParams(window.location.search); const tid = p.get('tg_id'); if(tid){ u={id:tid, first_name:'User'}; src="URL"; } }
+                if(!u && this.tg?.initData) { try { u = JSON.parse(new URLSearchParams(this.tg.initData).get('user')); src="Raw"; } catch(e){ src="DataError"; } }
+                if(!u) { const p = new URLSearchParams(window.location.search); const tid = p.get('tg_id'); if(tid){ u={id:tid, first_name:'User'}; src="URL"; } else { src="NoUserFound"; } }
 
-                if(log) log.textContent = `Sync: ${src} | ID: ${u?.id || '?'}`;
+                if(log) log.textContent = `Sync: ${src} | ID: ${u?.id || 'Aniqlanmadi'}`;
 
                 if(u) {
                     const un = document.getElementById('u-name'); if(un) un.textContent = [u.first_name, u.last_name].filter(Boolean).join(' ') || 'User';
-                    const dbg = document.getElementById('u-dbg'); if(dbg) dbg.textContent = `ID: ${u.id} | v6.4 (${src})`;
+                    const dbg = document.getElementById('u-dbg'); if(dbg) dbg.textContent = `ID: ${u.id} | v6.5 (${src})`;
                     if(u.photo_url) document.getElementById('u-avatar').innerHTML = `<img src="${u.photo_url}" style="width:100%;height:100%;object-fit:cover">`;
 
                     try {
@@ -137,11 +137,13 @@
                         if(r.ok) {
                             const d = await r.json();
                             if(d.ok && d.user) {
-                                const ph = document.getElementById('u-phone'); if(ph) ph.textContent = d.user.phone_number || '-';
+                                const ph = document.getElementById('u-phone'); if(ph) ph.textContent = d.user.phone_number || 'Raqam topilmadi';
                                 if(d.user.first_name && un) un.textContent = [d.user.first_name, d.user.last_name].filter(Boolean).join(' ');
                             }
                         }
-                    } catch(e){}
+                    } catch(e){ if(log) log.textContent += " | API Error"; }
+                } else {
+                    if(log) log.textContent += " | Foydalanuvchi ma'lumotlari yo'q";
                 }
             }
             rC() {
