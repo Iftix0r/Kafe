@@ -184,18 +184,57 @@ class KafeApp {
         
         const qty = this.cart[item.id]?.quantity || 0;
         
+        // Create image element with error handling
+        const imageHtml = item.image_url 
+            ? `<img src="${item.image_url}" alt="${item.name}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+               <div class="no-img" style="display:none;"><i class="fas fa-utensils"></i></div>`
+            : `<div class="no-img"><i class="fas fa-utensils"></i></div>`;
+        
+        // Create description section with toggle
+        const descriptionHtml = item.description ? `
+            <div class="item-description">
+                <button class="description-toggle" onclick="app.toggleDescription(${item.id})">
+                    <span>Batafsil</span>
+                    <i class="fas fa-chevron-down" id="desc-icon-${item.id}"></i>
+                </button>
+                <div class="description-content" id="desc-content-${item.id}">
+                    <p>${item.description}</p>
+                </div>
+            </div>
+        ` : '';
+        
         card.innerHTML = `
-            ${item.image_url ? `<img src="${item.image_url}" alt="${item.name}" loading="lazy">` : `<div class="no-img"><i class="fas fa-utensils"></i></div>`}
+            ${imageHtml}
             <div class="item-info">
                 <div class="item-name">${item.name}</div>
-                ${item.description ? `<div class="item-desc">${item.description}</div>` : ''}
                 <div class="item-price">${this.formatPrice(item.price)} so'm</div>
+                ${descriptionHtml}
             </div>
             <div class="item-controls" id="controls-${item.id}">
                 ${qty > 0 ? this.getQtyControlsHtml(item, qty) : `<button class="add-btn" onclick="app.addToCart(${item.id}, '${item.name}', ${item.price})">Qo'shish</button>`}
             </div>
         `;
         return card;
+    }
+
+    toggleDescription(itemId) {
+        const content = document.getElementById(`desc-content-${itemId}`);
+        const icon = document.getElementById(`desc-icon-${itemId}`);
+        
+        if (content && icon) {
+            const isOpen = content.classList.contains('open');
+            
+            if (isOpen) {
+                content.classList.remove('open');
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                content.classList.add('open');
+                icon.style.transform = 'rotate(180deg)';
+            }
+            
+            // Haptic feedback
+            this.tg?.HapticFeedback.impactOccurred('light');
+        }
     }
 
     getQtyControlsHtml(item, qty) {
@@ -293,8 +332,15 @@ class KafeApp {
                 const itemData = this.findItemById(item.id);
                 const row = document.createElement('div');
                 row.className = 'cart-item';
+                
+                // Create image with error handling
+                const imageHtml = itemData?.image_url 
+                    ? `<img src="${itemData.image_url}" class="cart-item-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                       <div class="cart-item-img no-img" style="display:none; font-size:1.5rem"><i class="fas fa-utensils"></i></div>`
+                    : `<div class="cart-item-img no-img" style="font-size:1.5rem"><i class="fas fa-utensils"></i></div>`;
+                
                 row.innerHTML = `
-                    ${itemData?.image_url ? `<img src="${itemData.image_url}" class="cart-item-img">` : `<div class="cart-item-img no-img" style="font-size:1.5rem"><i class="fas fa-utensils"></i></div>`}
+                    ${imageHtml}
                     <div class="cart-item-info">
                         <div class="cart-item-name">${item.name}</div>
                         <div class="cart-item-price">${this.formatPrice(item.price)} so'm</div>

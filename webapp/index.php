@@ -416,9 +416,42 @@ $phpTgId = $_GET['tg_id'] ?? '';
                 l.forEach(i => {
                     const d = document.createElement('div'); d.className = 'card';
                     const q = this.cart[i.id]?.q || 0;
-                    d.innerHTML = `<img src="${i.image_url||''}"><div class="card-body"><div><div class="name">${i.name}</div><div class="price">${this.fmt(i.price)}</div></div><div id="i-${i.id}">${q>0?this.qH(i.id,q):`<button class="btn-add" onclick="app.add(${i.id},'${i.name}',${i.price})">Qo'shish</button>`}</div></div>`;
+                    
+                    // Create description toggle if description exists
+                    const descHtml = i.description ? `
+                        <div style="margin-top:8px;">
+                            <button onclick="app.toggleDesc(${i.id})" style="width:100%;padding:4px 6px;background:var(--sec);border:1px solid #ddd;border-radius:6px;font-size:11px;color:#666;cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
+                                <span>Batafsil</span>
+                                <span id="desc-icon-${i.id}" style="transition:transform 0.3s">▼</span>
+                            </button>
+                            <div id="desc-content-${i.id}" style="max-height:0;overflow:hidden;transition:max-height 0.3s,padding 0.3s;background:var(--sec);border-radius:0 0 6px 6px;">
+                                <p style="font-size:11px;color:#666;line-height:1.4;margin:0;">${i.description}</p>
+                            </div>
+                        </div>
+                    ` : '';
+                    
+                    d.innerHTML = `<img src="${i.image_url||''}"><div class="card-body"><div><div class="name">${i.name}</div><div class="price">${this.fmt(i.price)}</div>${descHtml}</div><div id="i-${i.id}">${q>0?this.qH(i.id,q):`<button class="btn-add" onclick="app.add(${i.id},'${i.name}',${i.price})">Qo'shish</button>`}</div></div>`;
                     g.appendChild(d);
                 });
+            }
+            toggleDesc(id) {
+                const content = document.getElementById(`desc-content-${id}`);
+                const icon = document.getElementById(`desc-icon-${id}`);
+                if (content && icon) {
+                    const isOpen = content.style.maxHeight && content.style.maxHeight !== '0px';
+                    if (isOpen) {
+                        content.style.maxHeight = '0px';
+                        content.style.padding = '0px';
+                        content.style.border = 'none';
+                        icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        content.style.maxHeight = '100px';
+                        content.style.padding = '6px';
+                        content.style.border = '1px solid #ddd';
+                        content.style.borderTop = 'none';
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                }
             }
             qH(id,q) { return `<div class="qty-row"><button onclick="app.ch(${id},-1)">−</button><span>${q}</span><button onclick="app.ch(${id},1)">+</button></div>`; }
             fil(id,b) { document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); b.classList.add('active'); this.rI(id); }

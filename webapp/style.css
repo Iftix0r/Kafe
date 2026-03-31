@@ -159,6 +159,11 @@ body {
     width: 100%;
     height: 110px;
     object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.item-card:hover img {
+    transform: scale(1.05);
 }
 
 .no-img {
@@ -169,12 +174,93 @@ body {
     justify-content: center;
     font-size: 2.5rem;
     color: var(--text-secondary);
+    transition: background-color 0.3s ease;
+}
+
+.item-card:hover .no-img {
+    background: var(--bg-tertiary);
 }
 
 .item-info { padding: 10px; flex: 1; }
 .item-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
 .item-desc { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px; }
 .item-price { font-weight: 700; color: var(--primary-color); font-size: 0.9rem; }
+
+/* Description Toggle */
+.item-description {
+    margin-top: 8px;
+}
+
+.description-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 6px 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.description-toggle:hover {
+    background: var(--bg-tertiary);
+    color: var(--primary-color);
+}
+
+.description-toggle:active {
+    transform: scale(0.98);
+}
+
+.description-toggle i {
+    font-size: 0.7rem;
+    transition: transform 0.3s ease;
+}
+
+.description-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    background: var(--bg-secondary);
+    border-radius: 0 0 6px 6px;
+    margin-top: -1px;
+}
+
+.description-content.open {
+    max-height: 200px;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-top: none;
+}
+
+.description-content p {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* Mobile optimizations for description */
+@media (max-width: 480px) {
+    .description-toggle {
+        padding: 8px;
+        font-size: 0.8rem;
+    }
+    
+    .description-content.open {
+        padding: 10px;
+        max-height: 150px;
+    }
+    
+    .description-content p {
+        font-size: 0.8rem;
+        line-height: 1.5;
+    }
+}
 
 .item-controls {
     padding: 10px;
@@ -235,6 +321,16 @@ body {
     width: 60px; height: 60px;
     border-radius: 8px;
     object-fit: cover;
+    border: 2px solid var(--border-light);
+}
+
+.cart-item-img.no-img {
+    background: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    border: 2px solid var(--border);
 }
 
 .cart-item-info { flex: 1; }
