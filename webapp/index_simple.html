@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menyu</title>
+    <link rel="stylesheet" href="style_simple.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <!-- Loading -->
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Menyu yuklanmoqda...</p>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="app hidden">
+        <!-- Categories -->
+        <div class="categories" id="categories"></div>
+
+        <!-- Menu -->
+        <div class="menu" id="menu"></div>
+
+        <!-- Comment -->
+        <div class="comment-box">
+            <textarea id="comment" placeholder="Qo'shimcha so'rov (ixtiyoriy)"></textarea>
+        </div>
+    </div>
+
+    <script src="app_simple.js"></script>
+</body>
+</html>
