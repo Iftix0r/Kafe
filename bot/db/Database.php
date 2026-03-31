@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../bot/config.php';
+require_once __DIR__ . '/../config.php';
 
 class Database {
     private static ?PDO $instance = null;

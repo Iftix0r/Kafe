@@ -2,14 +2,24 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-const MENU_API = '../bot/api/menu.php';
+const MENU_API = '/bot/api/menu.php';
 const cart = {};
 
 async function loadMenu() {
-    const res = await fetch(MENU_API);
-    const categories = await res.json();
-    renderCategories(categories);
-    renderMenu(categories);
+    try {
+        const res = await fetch(MENU_API);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const categories = await res.json();
+        if (!categories.length) {
+            document.getElementById('menu').innerHTML = '<p style="padding:20px">Menyu bo\'sh</p>';
+            return;
+        }
+        renderCategories(categories);
+        renderMenu(categories);
+    } catch (e) {
+        document.getElementById('menu').innerHTML =
+            `<p style="padding:20px;color:red">Xato: ${e.message}</p>`;
+    }
 }
 
 function renderCategories(categories) {
