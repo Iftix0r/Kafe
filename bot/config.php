@@ -1,7 +1,7 @@
 <?php
 define('BOT_TOKEN', '8695815144:AAGN5duKthrGjEake5hk88QArLsQZrgHAzg');
 define('ADMIN_TELEGRAM_ID', 2114098498);
-define('WEBAPP_URL', 'https://olmazorgo.bigsaver.ru/webapp/index_simple_test.html');
+define('WEBAPP_URL', 'https://olmazorgo.bigsaver.ru/webapp/index_working.html');
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'olmazorgo');
 define('DB_USER', 'olmazorgo');
