@@ -11,6 +11,15 @@ function logMessage($message) {
     file_put_contents($logFile, "[$timestamp] $message\n", FILE_APPEND);
 }
 
+// Session file helper
+function getSessionFile($chatId) {
+    $sessionsDir = __DIR__ . "/sessions";
+    if (!is_dir($sessionsDir)) {
+        mkdir($sessionsDir, 0755, true);
+    }
+    return $sessionsDir . "/order_session_{$chatId}.json";
+}
+
 logMessage("=== Test Webhook Called ===");
 
 $input = file_get_contents('php://input');
@@ -45,18 +54,11 @@ if (isset($message['web_app_data'])) {
     logMessage("Parsed order data: " . json_encode($orderData));
     
     if ($orderData && isset($orderData['items'])) {
-        // Save order to session (without database)
-        $sessionFile = __DIR__ . "/sessions/order_session_{$chatId}.json";
-        
-        // Create sessions directory if it doesn't exist
-        $sessionsDir = __DIR__ . "/sessions";
-        if (!is_dir($sessionsDir)) {
-            mkdir($sessionsDir, 0755, true);
-        }
-        
+        // Save order to session
+        $sessionFile = getSessionFile($chatId);
         $sessionData = [
             'data' => $orderData,
-            'user' => $from, // Use Telegram user data directly
+            'user' => $from,
             'step' => 'phone',
             'timestamp' => time()
         ];
@@ -131,7 +133,7 @@ if (isset($message['text'])) {
     logMessage("Text message: $text");
     
     // Check if there's an active order session
-    $sessionFile = sys_get_temp_dir() . "/order_session_{$chatId}.json";
+    $sessionFile = getSessionFile($chatId);
     if (file_exists($sessionFile)) {
         $sessionData = json_decode(file_get_contents($sessionFile), true);
         logMessage("Found order session, step: " . $sessionData['step']);
@@ -190,8 +192,8 @@ if (isset($message['text'])) {
             
             $comment = (strtolower($text) === 'yo\'q' || strtolower($text) === 'yoq') ? '' : $text;
             
-            // Build final summary (without saving to database)
-            $orderId = rand(1000, 9999); // Generate random order ID for testing
+            // Build final summary
+            $orderId = rand(1000, 9999);
             
             $finalSummary = "📋 Buyurtma #{$orderId}\n\n";
             $finalSummary .= "👤 Mijoz: {$sessionData['user']['first_name']} {$sessionData['user']['last_name']}\n";
@@ -242,7 +244,7 @@ if (isset($message['location'])) {
     $address = "📍 GPS: $lat, $lon";
     
     // Check if there's an active order session
-    $sessionFile = sys_get_temp_dir() . "/order_session_{$chatId}.json";
+    $sessionFile = getSessionFile($chatId);
     if (file_exists($sessionFile)) {
         $sessionData = json_decode(file_get_contents($sessionFile), true);
         
@@ -282,16 +284,7 @@ function sendTelegramMessage($chatId, $text, $keyboard = null) {
     ];
     
     if ($keyboard) {
-        if (isset($keyboard['keyboard'])) {
-            // Regular keyboard
-            $params['reply_markup'] = json_encode($keyboard);
-        } elseif (isset($keyboard['inline_keyboard'])) {
-            // Inline keyboard
-            $params['reply_markup'] = json_encode($keyboard);
-        } else {
-            // Direct keyboard array
-            $params['reply_markup'] = json_encode($keyboard);
-        }
+        $params['reply_markup'] = json_encode($keyboard);
     }
     
     $url = 'https://api.telegram.org/bot' . BOT_TOKEN . '/sendMessage';
