@@ -156,18 +156,37 @@ if (isset($message['text']) && $message['text'] === '/start') {
     // Create or update user
     $user = getOrCreateUser($from);
     
-    $welcomeText = "🍽 Olmazor Go ga xush kelibsiz!\n\n";
-    $welcomeText .= "📱 Telefon raqamingizni yuboring:";
-    
-    $keyboard = [
-        'keyboard' => [[
-            ['text' => '📱 Telefon raqamni yuborish', 'request_contact' => true]
-        ]],
-        'resize_keyboard' => true,
-        'one_time_keyboard' => true,
-    ];
-    
-    sendTelegramMessage($chatId, $welcomeText, $keyboard);
+    // Check if user already registered (has phone number)
+    if ($user && !empty($user['phone_number'])) {
+        logMessage("Returning user with phone: " . $user['phone_number']);
+        
+        $welcomeText = "🍽 Xush kelibsiz, " . ($from['first_name'] ?? '') . "!\n\n";
+        $welcomeText .= "👇 Buyurtma berish uchun menyuni oching:";
+        
+        $keyboard = [
+            'keyboard' => [[
+                ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL]]
+            ]],
+            'resize_keyboard' => true,
+        ];
+        
+        sendTelegramMessage($chatId, $welcomeText, $keyboard);
+    } else {
+        logMessage("New user, requesting phone number");
+        
+        $welcomeText = "🍽 Olmazor Go ga xush kelibsiz!\n\n";
+        $welcomeText .= "📱 Telefon raqamingizni yuboring:";
+        
+        $keyboard = [
+            'keyboard' => [[
+                ['text' => '📱 Telefon raqamni yuborish', 'request_contact' => true]
+            ]],
+            'resize_keyboard' => true,
+            'one_time_keyboard' => true,
+        ];
+        
+        sendTelegramMessage($chatId, $welcomeText, $keyboard);
+    }
     exit;
 }
 
