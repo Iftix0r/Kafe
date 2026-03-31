@@ -104,38 +104,6 @@
                 await this.load();
                 setTimeout(() => { const l = document.getElementById('ls'); if(l) l.style.opacity='0'; setTimeout(()=>l.remove(),400); }, 1000);
             }
-            async sync(manual = false) {
-                if (!this.tg) this.tg = window.Telegram?.WebApp;
-                const dbg = document.getElementById('u-debug');
-                let u = this.tg?.initDataUnsafe?.user;
-                if (!u && this.tg?.initData) { try { u = JSON.parse(new URLSearchParams(this.tg.initData).get('user')); } catch(e){} }
-                
-                if (u) {
-                    const name = u.first_name + (u.last_name ? ' ' + u.last_name : '');
-                    document.getElementById('u-name').textContent = name || 'Foydalanuvchi';
-                    if (dbg) dbg.textContent = `ID: ${u.id} | v5.1`;
-                    if (u.photo_url) document.getElementById('u-avatar').innerHTML = `<img src="${u.photo_url}" style="width:100%;height:100%;object-fit:cover">`;
-                    
-                    try {
-                        // Testing relative path more robustly
-                        const apiPaths = ['../bot/api/user.php?id=', '/bot/api/user.php?id='];
-                        let data = null;
-                        for (let p of apiPaths) {
-                            try {
-                                const r = await fetch(p + u.id);
-                                if (r.ok) { data = await r.json(); break; }
-                            } catch(e){}
-                        }
-                        if (data && data.ok && data.user) {
-                            document.getElementById('u-phone').textContent = data.user.phone_number || 'Yo\'q';
-                        } else {
-                             document.getElementById('u-phone').textContent = "Bazada yo'q";
-                        }
-                    } catch(e) { document.getElementById('u-phone').textContent = "Xato"; }
-                } else if (manual) {
-                    if (dbg) dbg.textContent = "Data topilmadi | v5.1";
-                }
-            }
             async load() { try { const r = await fetch('https://olmazorgo.bigsaver.ru/bot/api/menu.php'); this.items = await r.json(); this.rC(); this.rI(); } catch(e){} }
             rC() {
                 const c = document.getElementById('cats'); c.innerHTML = '<button class="chip active" onclick="app.fil(\'all\',this)">Barchasi</button>';
