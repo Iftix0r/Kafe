@@ -63,7 +63,7 @@ class StartHandler {
             'parse_mode' => 'HTML',
             'reply_markup' => json_encode([
                 'inline_keyboard' => [[
-                    ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL . 'index_modern.html']],
+                    ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL]],
                 ]],
                 'remove_keyboard' => true
             ]),
@@ -81,7 +81,7 @@ class StartHandler {
             'parse_mode' => 'HTML',
             'reply_markup' => json_encode([
                 'inline_keyboard' => [[
-                    ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL . 'index_modern.html']],
+                    ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL]],
                 ]],
             ]),
         ]);
