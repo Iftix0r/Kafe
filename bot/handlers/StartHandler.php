@@ -16,23 +16,40 @@ class StartHandler {
 
         // Contact received → save user
         if (isset($message['contact'])) {
-            $this->userRepo->create([
+            $userId = $this->userRepo->create([
                 'telegram_id'  => $from['id'],
                 'first_name'   => $from['first_name'] ?? '',
                 'last_name'    => $from['last_name'] ?? '',
                 'username'     => $from['username'] ?? '',
                 'phone_number' => $message['contact']['phone_number'],
             ]);
+            
+            // Send notification to admin about new user registration
+            $this->notifyAdminNewUser($from, $message['contact']['phone_number'], 'contact_shared');
+            
             $this->sendWelcomeMessage($chatId, $from['first_name'] ?? 'Foydalanuvchi');
             return;
         }
 
-        // /start command
+        // /start command - log the activity
+        $this->userRepo->logStartCommand($from['id']);
+        
         $user = $this->userRepo->findByTelegramId($from['id']);
         if ($user && $user['phone_number']) {
+            // Existing user with phone
             $this->sendMenuButton($chatId, $from['first_name'] ?? 'Foydalanuvchi');
+            
+            // Notify admin about returning user
+            $this->notifyAdminUserActivity($from, 'returning_user');
         } else {
+            // New user or user without phone
+            $isNewUser = !$user;
             $this->requestContact($chatId, $from['first_name'] ?? 'Foydalanuvchi');
+            
+            // Notify admin about new user start
+            if ($isNewUser) {
+                $this->notifyAdminNewUser($from, null, 'new_start');
+            }
         }
     }
 
@@ -104,5 +121,64 @@ class StartHandler {
         if ($result === false) {
             error_log("Telegram API request failed for method: $method");
         }
+    }
+
+    private function notifyAdminNewUser(array $from, ?string $phoneNumber, string $action): void {
+        $firstName = $from['first_name'] ?? 'Noma\'lum';
+        $lastName = $from['last_name'] ?? '';
+        $username = $from['username'] ?? '';
+        $telegramId = $from['id'];
+        
+        $fullName = trim($firstName . ' ' . $lastName);
+        $usernameText = $username ? "@{$username}" : "Username yo'q";
+        $phoneText = $phoneNumber ? "📱 {$phoneNumber}" : "📱 Telefon raqam yo'q";
+        
+        $actionText = [
+            'new_start' => '🆕 Yangi foydalanuvchi botni boshladi',
+            'contact_shared' => '✅ Foydalanuvchi telefon raqamini ulashdi',
+            'returning_user' => '🔄 Mavjud foydalanuvchi qaytdi'
+        ];
+        
+        $message = "<b>{$actionText[$action]}</b>\n\n";
+        $message .= "👤 <b>Ism:</b> {$fullName}\n";
+        $message .= "🆔 <b>Telegram ID:</b> <code>{$telegramId}</code>\n";
+        $message .= "👨‍💻 <b>Username:</b> {$usernameText}\n";
+        $message .= "{$phoneText}\n";
+        $message .= "🕐 <b>Vaqt:</b> " . date('d.m.Y H:i:s') . "\n\n";
+        
+        if ($action === 'new_start') {
+            $message .= "🎯 Foydalanuvchi hali telefon raqamini bermagan";
+        } elseif ($action === 'contact_shared') {
+            $message .= "🎉 Ro'yxatdan o'tish yakunlandi!";
+        }
+        
+        $this->sendRequest('sendMessage', [
+            'chat_id' => ADMIN_TELEGRAM_ID,
+            'text' => $message,
+            'parse_mode' => 'HTML'
+        ]);
+    }
+
+    private function notifyAdminUserActivity(array $from, string $activity): void {
+        $firstName = $from['first_name'] ?? 'Noma\'lum';
+        $lastName = $from['last_name'] ?? '';
+        $username = $from['username'] ?? '';
+        $telegramId = $from['id'];
+        
+        $fullName = trim($firstName . ' ' . $lastName);
+        $usernameText = $username ? "@{$username}" : "Username yo'q";
+        
+        $message = "🔄 <b>Foydalanuvchi faolligi</b>\n\n";
+        $message .= "👤 <b>Ism:</b> {$fullName}\n";
+        $message .= "🆔 <b>Telegram ID:</b> <code>{$telegramId}</code>\n";
+        $message .= "👨‍💻 <b>Username:</b> {$usernameText}\n";
+        $message .= "🕐 <b>Vaqt:</b> " . date('d.m.Y H:i:s') . "\n";
+        $message .= "📋 <b>Harakat:</b> Menyuni ochdi";
+        
+        $this->sendRequest('sendMessage', [
+            'chat_id' => ADMIN_TELEGRAM_ID,
+            'text' => $message,
+            'parse_mode' => 'HTML'
+        ]);
     }
 }

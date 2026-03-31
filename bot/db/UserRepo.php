@@ -31,6 +31,12 @@ class UserRepo {
             if (!empty($data['phone_number'])) {
                 $sql .= ', phone_number = ?';
                 $params[] = $data['phone_number'];
+                
+                // Log contact sharing activity
+                $this->logActivity($existing['id'], 'contact_shared', [
+                    'phone_number' => $data['phone_number'],
+                    'updated_profile' => true
+                ]);
             }
             
             $sql .= ' WHERE telegram_id = ?';
@@ -53,7 +59,79 @@ class UserRepo {
                 $data['username'] ?? '',
                 $data['phone_number'] ?? null
             ]);
-            return (int)$this->db->lastInsertId();
+            
+            $userId = (int)$this->db->lastInsertId();
+            
+            // Log new user activity
+            $this->logActivity($userId, 'new_user', [
+                'telegram_id' => $data['telegram_id'],
+                'first_name' => $data['first_name'] ?? '',
+                'last_name' => $data['last_name'] ?? '',
+                'username' => $data['username'] ?? '',
+                'phone_number' => $data['phone_number'] ?? null,
+                'registration_source' => 'telegram_bot'
+            ]);
+            
+            return $userId;
+        }
+    }
+
+    public function logStartCommand(int $telegramId): void {
+        $user = $this->findByTelegramId($telegramId);
+        if ($user) {
+            $this->logActivity($user['id'], 'start_command', [
+                'telegram_id' => $telegramId,
+                'timestamp' => date('Y-m-d H:i:s')
+            ]);
+        }
+    }
+
+    private function logActivity(int $userId, string $activityType, array $data): void {
+        try {
+            $stmt = $this->db->prepare(
+                'INSERT INTO user_activities (user_id, activity_type, activity_data) VALUES (?, ?, ?)'
+            );
+            $stmt->execute([$userId, $activityType, json_encode($data)]);
+        } catch (Exception $e) {
+            error_log("Failed to log user activity: " . $e->getMessage());
+        }
+    }
+
+    public function getNewUsersStats(): array {
+        try {
+            $stmt = $this->db->query('SELECT * FROM new_users_today');
+            return $stmt->fetch() ?: [
+                'total_new_users' => 0,
+                'today_new_users' => 0,
+                'week_new_users' => 0,
+                'month_new_users' => 0
+            ];
+        } catch (Exception $e) {
+            error_log("Failed to get new users stats: " . $e->getMessage());
+            return [
+                'total_new_users' => 0,
+                'today_new_users' => 0,
+                'week_new_users' => 0,
+                'month_new_users' => 0
+            ];
+        }
+    }
+
+    public function getRecentNewUsers(int $limit = 10): array {
+        try {
+            $stmt = $this->db->prepare(
+                'SELECT u.*, ua.created_at as registration_time, ua.activity_data
+                 FROM users u
+                 JOIN user_activities ua ON u.id = ua.user_id
+                 WHERE ua.activity_type = "new_user"
+                 ORDER BY ua.created_at DESC
+                 LIMIT ?'
+            );
+            $stmt->execute([$limit]);
+            return $stmt->fetchAll();
+        } catch (Exception $e) {
+            error_log("Failed to get recent new users: " . $e->getMessage());
+            return [];
         }
     }
 }

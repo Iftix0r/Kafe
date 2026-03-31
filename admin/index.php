@@ -30,6 +30,21 @@ $totalRevenue = db()->query(
     "SELECT SUM(total_price) FROM orders WHERE status IN ('confirmed', 'preparing', 'delivered')"
 )->fetchColumn() ?: 0;
 
+// Yangi foydalanuvchilar statistikasi
+$newUsersToday = db()->query(
+    "SELECT COUNT(*) FROM users WHERE DATE(created_at) = CURDATE()"
+)->fetchColumn();
+
+$totalUsers = db()->query("SELECT COUNT(*) FROM users")->fetchColumn();
+
+// Oxirgi yangi foydalanuvchilar
+$recentUsers = db()->query(
+    "SELECT u.*, DATE_FORMAT(u.created_at, '%d.%m.%Y %H:%i') as reg_time 
+     FROM users u 
+     ORDER BY u.created_at DESC 
+     LIMIT 5"
+)->fetchAll();
+
 $statusLabels = [
     'new'       => ['🆕 Yangi',       'new'],
     'confirmed' => ['✅ Tasdiqlangan', 'confirmed'],
@@ -57,6 +72,7 @@ $statusLabels = [
         <span>Olmazor Go Admin</span>
     </div>
     <div class="nav-links">
+        <a href="users.php"><i class="fas fa-users"></i> Foydalanuvchilar</a>
         <a href="menu.php"><i class="fas fa-list"></i> Menyu</a>
         <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Chiqish</a>
     </div>
@@ -76,6 +92,16 @@ $statusLabels = [
             <div class="label">Bugungi buyurtmalar</div>
         </div>
         <div class="stat-card">
+            <div class="icon"><i class="fas fa-users"></i></div>
+            <div class="number"><?= $totalUsers ?></div>
+            <div class="label">Jami foydalanuvchilar</div>
+        </div>
+        <div class="stat-card">
+            <div class="icon"><i class="fas fa-user-plus"></i></div>
+            <div class="number"><?= $newUsersToday ?></div>
+            <div class="label">Bugungi yangi foydalanuvchilar</div>
+        </div>
+        <div class="stat-card">
             <div class="icon"><i class="fas fa-money-bill-wave"></i></div>
             <div class="number"><?= number_format($totalRevenue, 0, '.', ' ') ?></div>
             <div class="label">Jami daromad (so'm)</div>
@@ -86,6 +112,36 @@ $statusLabels = [
             <div class="label">Yangi buyurtmalar</div>
         </div>
     </div>
+
+    <!-- Recent New Users -->
+    <?php if (!empty($recentUsers)): ?>
+    <div class="detail-card">
+        <h3><i class="fas fa-user-plus"></i> Oxirgi yangi foydalanuvchilar</h3>
+        <div class="recent-users-list">
+            <?php foreach ($recentUsers as $user): ?>
+            <div class="user-item">
+                <div class="user-info">
+                    <div class="user-name">
+                        <strong><?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?></strong>
+                        <?php if ($user['username']): ?>
+                            <span class="username">@<?= htmlspecialchars($user['username']) ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="user-details">
+                        <span class="telegram-id">ID: <?= $user['telegram_id'] ?></span>
+                        <?php if ($user['phone_number']): ?>
+                            <span class="phone">📱 <?= htmlspecialchars($user['phone_number']) ?></span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <div class="user-time">
+                    <i class="fas fa-clock"></i> <?= $user['reg_time'] ?>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <!-- Filter Tabs -->
     <div class="filter-tabs">
