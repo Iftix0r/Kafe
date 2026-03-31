@@ -64,10 +64,37 @@ $phpTgId = $_GET['tg_id'] ?? '';
             <button onclick="app.send()" style="width:100%;padding:20px;background:var(--p);color:#fff;border:none;border-radius:22px;margin-top:20px;font-weight:800">Tasdiqlash</button>
         </div>
     </main>
+    <main id="v-prof" class="view">
+        <div class="hero">
+            <div class="avatar" id="u-avatar">👤</div>
+            <h2 id="u-name">Mehmon</h2>
+            <div id="u-dbg" style="opacity:0.6;font-size:0.8rem;margin-top:8px">v6.7</div>
+        </div>
+        <div style="padding:20px;background:var(--sec);border-radius:22px;font-weight:700;margin-bottom:15px;cursor:pointer" onclick="app.tab('orders')">
+            📦 Buyurtmalarim <span style="float:right;color:var(--p)">›</span>
+        </div>
+        <div style="padding:20px;background:var(--sec);border-radius:22px;font-weight:700">📞 Tel: <span id="u-phone" style="float:right;color:var(--p)">-</span></div>
+        <button onclick="app.sync(true)" style="width:100%;padding:20px;background:var(--p);color:#fff;border:none;border-radius:22px;margin-top:15px;font-weight:800">Yangilash 🔄</button>
+        <div id="dbg-log" style="font-size:0.6rem; color:#aaa; text-align:center; padding:20px; word-break: break-all;">Starting...</div>
+    </main>
+    <main id="v-orders" class="view">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+            <button onclick="app.tab('prof')" style="background:none;border:none;font-size:1.5rem;color:var(--p);cursor:pointer;padding:8px">‹</button>
+            <h2 style="font-weight:800">Buyurtmalarim</h2>
+        </div>
+        <div id="orders-list"></div>
+        <div id="orders-empty" class="hidden" style="text-align:center;padding:50px;opacity:0.6">
+            <div style="font-size:4rem;margin-bottom:16px">📦</div>
+            <h3>Buyurtmalar yo'q</h3>
+            <p>Hali hech qanday buyurtma bermadingiz</p>
+            <button onclick="app.tab('menu')" style="padding:12px 24px;background:var(--p);color:#fff;border:none;border-radius:12px;margin-top:16px;font-weight:600">Buyurtma berish</button>
+        </div>
+    </main>
     <div id="float" class="float-btn hidden" onclick="app.tab('cart')">🛒 Savatga o'tish → <span id="float-sum">0</span></div>
     <nav class="nav">
         <div class="nav-tab active" id="n-menu" onclick="app.tab('menu')">🍽️<br>Menyu</div>
         <div class="nav-tab" id="n-cart" onclick="app.tab('cart')">🛒<br>Savat<div id="badge" class="badge hidden">0</div></div>
+        <div class="nav-tab" id="n-prof" onclick="app.tab('prof')">👤<br>Profil</div>
     </nav>
 
     <script>
@@ -83,7 +110,7 @@ $phpTgId = $_GET['tg_id'] ?? '';
                 this.init();
             }
             async init() {
-                if(this.tg) { this.tg.ready(); this.tg.expand(); }
+                if(this.tg) { this.tg.ready(); this.tg.expand(); this.sync(); setTimeout(()=>this.sync(), 1000); }
                 try { await this.load(); } catch(e) {}
                 this.hideLS();
             }
@@ -91,6 +118,189 @@ $phpTgId = $_GET['tg_id'] ?? '';
             async load() {
                 const r = await fetch('https://olmazorgo.bigsaver.ru/bot/api/menu.php');
                 this.items = await r.json(); this.rC(); this.rI();
+            }
+            async sync(isManual=false) {
+                try {
+                    const dbg = document.getElementById('u-dbg');
+                    const uName = document.getElementById('u-name');
+                    const uPhone = document.getElementById('u-phone');
+                    const log = document.getElementById('dbg-log');
+                    
+                    if (!this.tg) this.tg = window.Telegram?.WebApp;
+                    
+                    let u = this.tg?.initDataUnsafe?.user;
+                    let source = "Bridge";
+
+                    let rawDump = "RAW: " + JSON.stringify(this.tg?.initDataUnsafe || {});
+
+                    if (!u && this.tg?.initData) {
+                        try {
+                            const p = new URLSearchParams(this.tg.initData);
+                            const s = p.get('user');
+                            if (s) { u = JSON.parse(s); source = "Bot-Raw"; }
+                        } catch(e) {}
+                    }
+                    
+                    const phpTgId = "<?= htmlspecialchars($phpTgId) ?>";
+                    if (!u && phpTgId) {
+                        u = { id: phpTgId, first_name: '' }; 
+                        source = "PHP-ID";
+                    }
+
+                    if (!u) {
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const tid = urlParams.get('tg_id');
+                        if (tid) { u = { id: tid, first_name: '' }; source = "URL-ID"; }
+                    }
+
+                    if (!u) {
+                        if (log) log.innerHTML = `Aniqlanmadingiz.<br><br><small style="color:red">${rawDump}<br>PHP_ID: '${phpTgId}'</small>`;
+                        if (dbg) dbg.textContent = "v6.7 - NotFound";
+                        return;
+                    }
+
+                    if (log) log.textContent = `Sinxronizatsiya (${source}: ${u.id})...`;
+                    if (uName) {
+                        if (u.first_name && u.first_name !== '') {
+                            uName.textContent = u.first_name;
+                        } else {
+                            uName.textContent = 'Yuklanmoqda...';
+                        }
+                    }
+                    if (dbg) dbg.textContent = `ID: ${u.id} | v6.7`;
+                    
+                    if (u.photo_url) {
+                        document.getElementById('u-avatar').innerHTML = `<img src="${u.photo_url}" style="width:100%;height:100%;object-fit:cover">`;
+                    }
+
+                    try {
+                        const regUrl = `../bot/api/register.php?id=${u.id}&first=${encodeURIComponent(u.first_name||'')}&last=${encodeURIComponent(u.last_name||'')}&user=${encodeURIComponent(u.username||'')}`;
+                        fetch(regUrl).catch(e => {});
+                    } catch(e){}
+
+                    try {
+                        const paths = ['../bot/api/user.php?id=', '/bot/api/user.php?id=', '/Kafe/bot/api/user.php?id='];
+                        let resData = null;
+                        for (let p of paths) {
+                            try {
+                                const r = await fetch(p + u.id);
+                                if (r.ok) { let j = await r.json(); if(j.ok){ resData = j; break; } }
+                            } catch(e){}
+                        }
+                        
+                        if (resData && resData.user) {
+                            if (uPhone) uPhone.textContent = resData.user.phone_number || 'Raqam yo\'q';
+                            
+                            // LIVE FETCH: Name
+                            const liveName = [resData.user.first_name, resData.user.last_name].filter(Boolean).join(' ');
+                            if (liveName && uName) {
+                                uName.textContent = liveName;
+                            } else if (uName && !liveName) {
+                                uName.textContent = 'Ism topilmadi';
+                            }
+                            
+                            // LIVE FETCH: Avatar
+                            if (resData.user.photo_url) {
+                                document.getElementById('u-avatar').innerHTML = `<img src="${resData.user.photo_url}" style="width:100%;height:100%;object-fit:cover">`;
+                            }
+                            
+                            if (log) log.innerHTML = `Muvaffaqiyatli ulangan! ✅<br><small style="opacity:0.5">${rawDump}</small>`;
+                        } else {
+                            if (uPhone) uPhone.textContent = "Bazada yo'q";
+                            if (uName) uName.textContent = "Ism topilmadi";
+                            if (log) log.textContent = "Siz bazada yo'qsiz. Telefoningizni yuboring.";
+                        }
+                    } catch(err) {
+                        if (log) log.innerHTML = `API Xato.<br><small style="opacity:0.5">${rawDump}</small>`;
+                        if (uPhone) uPhone.textContent = "Net Error";
+                        if (uName) uName.textContent = "Yuklanmadi";
+                    }
+                } catch (err) { const log = document.getElementById('dbg-log'); if(log) log.textContent = "JS Error: " + err.message; }
+            }
+            async loadOrders() {
+                const ordersList = document.getElementById('orders-list');
+                const ordersEmpty = document.getElementById('orders-empty');
+                
+                try {
+                    // Demo buyurtmalar
+                    const orders = [
+                        {
+                            id: 1001,
+                            date: '2024-03-15',
+                            status: 'completed',
+                            items: [
+                                { name: 'Osh', quantity: 2, price: 25000 },
+                                { name: 'Choy', quantity: 1, price: 5000 }
+                            ],
+                            total: 55000
+                        },
+                        {
+                            id: 1002,
+                            date: '2024-03-14',
+                            status: 'pending',
+                            items: [
+                                { name: 'Manti', quantity: 1, price: 30000 }
+                            ],
+                            total: 30000
+                        }
+                    ];
+                    
+                    if (orders.length === 0) {
+                        ordersList.innerHTML = '';
+                        ordersEmpty.classList.remove('hidden');
+                    } else {
+                        ordersEmpty.classList.add('hidden');
+                        ordersList.innerHTML = '';
+                        
+                        orders.forEach(order => {
+                            const statusText = {
+                                pending: 'Kutilmoqda',
+                                completed: 'Tayyor',
+                                cancelled: 'Bekor qilingan'
+                            };
+                            
+                            const statusClass = order.status;
+                            const statusBg = {
+                                pending: '#fef3c7',
+                                completed: '#d1fae5',
+                                cancelled: '#fee2e2'
+                            };
+                            const statusColor = {
+                                pending: '#d97706',
+                                completed: '#059669',
+                                cancelled: '#dc2626'
+                            };
+                            
+                            const orderCard = document.createElement('div');
+                            orderCard.style = 'background:white;border:1px solid #e6e6e6;border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 2px 4px rgba(0,0,0,0.02)';
+                            orderCard.innerHTML = `
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                                    <div>
+                                        <div style="font-weight:600;color:var(--p)">Buyurtma #${order.id}</div>
+                                        <div style="font-size:0.8rem;color:#707579">${order.date}</div>
+                                    </div>
+                                    <div style="padding:4px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;background:${statusBg[statusClass]};color:${statusColor[statusClass]}">${statusText[order.status]}</div>
+                                </div>
+                                <div style="margin-bottom:12px">
+                                    ${order.items.map(item => `
+                                        <div style="display:flex;justify-content:space-between;font-size:0.9rem;margin-bottom:4px">
+                                            <span>${item.name} x${item.quantity}</span>
+                                            <span>${this.fmt(item.price * item.quantity)}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <div style="display:flex;justify-content:space-between;font-weight:700;color:var(--p);padding-top:8px;border-top:1px dashed #e6e6e6">
+                                    <span>Jami:</span>
+                                    <span>${this.fmt(order.total)}</span>
+                                </div>
+                            `;
+                            ordersList.appendChild(orderCard);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Buyurtmalarni yuklashda xato:', error);
+                    ordersList.innerHTML = '<div style="text-align:center;padding:20px;color:red">Buyurtmalarni yuklab bo\'lmadi</div>';
+                }
             }
             async sync(isManual=false) {
                 try {
@@ -220,7 +430,9 @@ $phpTgId = $_GET['tg_id'] ?? '';
                 if(this.cur===t)return; this.cur=t;
                 document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById(`v-${t}`).classList.add('active');
                 document.querySelectorAll('.nav-tab').forEach(nt=>nt.classList.remove('active')); document.getElementById(`n-${t}`).classList.add('active');
-                if(t==='cart')this.rCrt(); this.sy(); window.scrollTo(0,0);
+                if(t==='cart')this.rCrt(); 
+                if(t==='orders')this.loadOrders();
+                this.sy(); window.scrollTo(0,0);
             }
             rCrt() {
                 const l=document.getElementById('cart-list'), e=document.getElementById('cart-empty'), f=document.getElementById('cart-foot'), list=Object.values(this.cart);

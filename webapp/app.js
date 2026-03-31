@@ -309,8 +309,114 @@ class KafeApp {
         return null;
     }
 
-    formatPrice(n) {
-        return Number(n).toLocaleString('uz-UZ').replace(/,/g, ' ');
+    renderProfile() {
+        if (!this.tg || !this.tg.initDataUnsafe?.user) return;
+        
+        const user = this.tg.initDataUnsafe.user;
+        document.getElementById('user-full-name').textContent = `${user.first_name} ${user.last_name || ''}`;
+        document.getElementById('user-telegram-id').textContent = user.username ? `@${user.username}` : `ID: ${user.id}`;
+        
+        if (user.photo_url) {
+            const avatar = document.getElementById('user-avatar');
+            avatar.innerHTML = `<img src="${user.photo_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`;
+        }
+    }
+
+    async loadOrders() {
+        const ordersList = document.getElementById('orders-list');
+        const ordersEmpty = document.getElementById('orders-empty');
+        
+        try {
+            // Bu yerda buyurtmalar API dan yuklanadi
+            // Hozircha demo ma'lumotlar
+            const orders = await this.fetchUserOrders();
+            
+            if (orders.length === 0) {
+                ordersList.innerHTML = '';
+                ordersEmpty.classList.remove('hidden');
+            } else {
+                ordersEmpty.classList.add('hidden');
+                ordersList.innerHTML = '';
+                
+                orders.forEach(order => {
+                    const orderCard = this.createOrderCard(order);
+                    ordersList.appendChild(orderCard);
+                });
+            }
+        } catch (error) {
+            console.error('Buyurtmalarni yuklashda xato:', error);
+            ordersList.innerHTML = '<div style="text-align:center;padding:20px;color:red">Buyurtmalarni yuklab bo\'lmadi</div>';
+        }
+    }
+
+    async fetchUserOrders() {
+        // Bu yerda haqiqiy API chaqiruvi bo'lishi kerak
+        // Hozircha demo ma'lumotlar qaytaradi
+        return [
+            {
+                id: 1001,
+                date: '2024-03-15',
+                status: 'completed',
+                items: [
+                    { name: 'Osh', quantity: 2, price: 25000 },
+                    { name: 'Choy', quantity: 1, price: 5000 }
+                ],
+                total: 55000
+            },
+            {
+                id: 1002,
+                date: '2024-03-14',
+                status: 'pending',
+                items: [
+                    { name: 'Manti', quantity: 1, price: 30000 }
+                ],
+                total: 30000
+            }
+        ];
+    }
+
+    createOrderCard(order) {
+        const card = document.createElement('div');
+        card.className = 'order-card';
+        
+        const statusText = {
+            pending: 'Kutilmoqda',
+            completed: 'Tayyor',
+            cancelled: 'Bekor qilingan'
+        };
+        
+        card.innerHTML = `
+            <div class="order-header">
+                <div>
+                    <div class="order-id">Buyurtma #${order.id}</div>
+                    <div class="order-date">${this.formatDate(order.date)}</div>
+                </div>
+                <div class="order-status ${order.status}">${statusText[order.status]}</div>
+            </div>
+            <div class="order-items">
+                ${order.items.map(item => `
+                    <div class="order-item">
+                        <span>${item.name} x${item.quantity}</span>
+                        <span>${this.formatPrice(item.price * item.quantity)} so'm</span>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="order-total">
+                <span>Jami:</span>
+                <span>${this.formatPrice(order.total)} so'm</span>
+            </div>
+        `;
+        
+        return card;
+    }
+
+    formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('uz-UZ', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
     }
 
     submitOrder() {
@@ -346,3 +452,6 @@ window.addEventListener('DOMContentLoaded', () => {
     // Expose app globally for onclick handlers
     window.app = app;
 });
+    formatPrice(n) {
+        return Number(n).toLocaleString('uz-UZ').replace(/,/g, ' ');
+    }
