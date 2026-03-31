@@ -46,18 +46,19 @@ $statusLabels = [
     <title>🍽 Olmazor Go - Admin Panel</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <nav class="navbar">
     <div class="brand">
-        <span class="emoji">🍽</span>
+        <span class="emoji"><i class="fas fa-utensils"></i></span>
         <span>Olmazor Go Admin</span>
     </div>
     <div class="nav-links">
-        <a href="menu.php">📋 Menyu</a>
-        <a href="logout.php">🚪 Chiqish</a>
+        <a href="menu.php"><i class="fas fa-list"></i> Menyu</a>
+        <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Chiqish</a>
     </div>
 </nav>
 
@@ -65,22 +66,22 @@ $statusLabels = [
     <!-- Statistics Cards -->
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="icon">📊</div>
+            <div class="icon"><i class="fas fa-chart-bar"></i></div>
             <div class="number"><?= $totalOrders ?></div>
             <div class="label">Jami buyurtmalar</div>
         </div>
         <div class="stat-card">
-            <div class="icon">📅</div>
+            <div class="icon"><i class="fas fa-calendar-day"></i></div>
             <div class="number"><?= $todayOrders ?></div>
             <div class="label">Bugungi buyurtmalar</div>
         </div>
         <div class="stat-card">
-            <div class="icon">💰</div>
+            <div class="icon"><i class="fas fa-money-bill-wave"></i></div>
             <div class="number"><?= number_format($totalRevenue, 0, '.', ' ') ?></div>
             <div class="label">Jami daromad (so'm)</div>
         </div>
         <div class="stat-card">
-            <div class="icon">⏳</div>
+            <div class="icon"><i class="fas fa-clock"></i></div>
             <div class="number"><?= $counts['new'] ?? 0 ?></div>
             <div class="label">Yangi buyurtmalar</div>
         </div>
@@ -89,20 +90,30 @@ $statusLabels = [
     <!-- Filter Tabs -->
     <div class="filter-tabs">
         <a href="index.php" class="tab <?= !$status ? 'active' : '' ?>">
-            📋 Barchasi (<?= $totalOrders ?>)
+            <i class="fas fa-list"></i> Barchasi (<?= $totalOrders ?>)
         </a>
-        <?php foreach ($statusLabels as $key => [$label]): ?>
-        <a href="?status=<?= $key ?>" class="tab <?= $status === $key ? 'active' : '' ?>">
-            <?= $label ?> (<?= $counts[$key] ?? 0 ?>)
+        <a href="?status=new" class="tab <?= $status === 'new' ? 'active' : '' ?>">
+            <i class="fas fa-plus-circle"></i> Yangi (<?= $counts['new'] ?? 0 ?>)
         </a>
-        <?php endforeach; ?>
+        <a href="?status=confirmed" class="tab <?= $status === 'confirmed' ? 'active' : '' ?>">
+            <i class="fas fa-check-circle"></i> Tasdiqlangan (<?= $counts['confirmed'] ?? 0 ?>)
+        </a>
+        <a href="?status=preparing" class="tab <?= $status === 'preparing' ? 'active' : '' ?>">
+            <i class="fas fa-fire"></i> Tayyorlanmoqda (<?= $counts['preparing'] ?? 0 ?>)
+        </a>
+        <a href="?status=delivered" class="tab <?= $status === 'delivered' ? 'active' : '' ?>">
+            <i class="fas fa-shipping-fast"></i> Yetkazildi (<?= $counts['delivered'] ?? 0 ?>)
+        </a>
+        <a href="?status=cancelled" class="tab <?= $status === 'cancelled' ? 'active' : '' ?>">
+            <i class="fas fa-times-circle"></i> Bekor (<?= $counts['cancelled'] ?? 0 ?>)
+        </a>
     </div>
 
     <!-- Orders Table -->
     <div class="table-container">
         <?php if (empty($orders)): ?>
-            <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
-                <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+            <div class="empty-state">
+                <div class="icon"><i class="fas fa-inbox"></i></div>
                 <h3>Buyurtmalar topilmadi</h3>
                 <p>Hozircha <?= $status ? $statusLabels[$status][0] : 'hech qanday' ?> buyurtmalar yo'q.</p>
             </div>
@@ -110,13 +121,13 @@ $statusLabels = [
             <table class="orders-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Mijoz</th>
-                        <th>Telefon</th>
-                        <th>Summa</th>
-                        <th>Holat</th>
-                        <th>Vaqt</th>
-                        <th>Amallar</th>
+                        <th><i class="fas fa-hashtag"></i> ID</th>
+                        <th><i class="fas fa-user"></i> Mijoz</th>
+                        <th><i class="fas fa-phone"></i> Telefon</th>
+                        <th><i class="fas fa-money-bill"></i> Summa</th>
+                        <th><i class="fas fa-info-circle"></i> Holat</th>
+                        <th><i class="fas fa-clock"></i> Vaqt</th>
+                        <th><i class="fas fa-cogs"></i> Amallar</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -134,22 +145,32 @@ $statusLabels = [
                         <td>
                             <a href="tel:<?= htmlspecialchars($order['phone_number']) ?>" 
                                style="color: var(--primary); text-decoration: none;">
-                                <?= htmlspecialchars($order['phone_number']) ?>
+                                <i class="fas fa-phone-alt"></i> <?= htmlspecialchars($order['phone_number']) ?>
                             </a>
                         </td>
                         <td><strong><?= number_format($order['total_price'], 0, '.', ' ') ?> so'm</strong></td>
                         <td>
                             <span class="status-badge status-<?= $order['status'] ?>">
+                                <?php
+                                $statusIcons = [
+                                    'new' => 'fas fa-plus-circle',
+                                    'confirmed' => 'fas fa-check-circle',
+                                    'preparing' => 'fas fa-fire',
+                                    'delivered' => 'fas fa-shipping-fast',
+                                    'cancelled' => 'fas fa-times-circle'
+                                ];
+                                ?>
+                                <i class="<?= $statusIcons[$order['status']] ?? 'fas fa-question-circle' ?>"></i>
                                 <?= $statusLabels[$order['status']][0] ?? $order['status'] ?>
                             </span>
                         </td>
                         <td>
-                            <div><?= date('d.m.Y', strtotime($order['created_at'])) ?></div>
-                            <small style="color: var(--text-secondary);"><?= date('H:i', strtotime($order['created_at'])) ?></small>
+                            <div><i class="fas fa-calendar"></i> <?= date('d.m.Y', strtotime($order['created_at'])) ?></div>
+                            <small style="color: var(--text-secondary);"><i class="fas fa-clock"></i> <?= date('H:i', strtotime($order['created_at'])) ?></small>
                         </td>
                         <td>
                             <a href="order.php?id=<?= $order['id'] ?>" class="btn btn-primary btn-sm">
-                                👁️ Ko'rish
+                                <i class="fas fa-eye"></i> Ko'rish
                             </a>
                         </td>
                     </tr>
@@ -178,44 +199,18 @@ document.addEventListener('DOMContentLoaded', () => {
         row.style.animation = `fadeIn 0.5s ease ${index * 0.05}s both`;
     });
 });
-</script>
-</body>
-</html>
 
-    <table class="orders-table">
-        <thead>
-            <tr>
-                <th>#</th><th>Mijoz</th><th>Telefon</th><th>Summa</th><th>Status</th><th>Vaqt</th><th>Amal</th>
-            </tr>
-        </thead>
-        <tbody>
-        <?php foreach ($orders as $o): ?>
-            <tr>
-                <td><a href="order.php?id=<?= $o['id'] ?>">#<?= $o['id'] ?></a></td>
-                <td><?= htmlspecialchars($o['first_name'] . ' ' . $o['last_name']) ?></td>
-                <td><?= htmlspecialchars($o['phone_number']) ?></td>
-                <td><?= number_format($o['total_price'], 0, '.', ' ') ?> so'm</td>
-                <td><span class="badge <?= $o['status'] ?>"><?= $statusLabels[$o['status']][0] ?></span></td>
-                <td><?= date('d.m H:i', strtotime($o['created_at'])) ?></td>
-                <td>
-                    <form method="POST" action="update_status.php" style="display:inline">
-                        <input type="hidden" name="id" value="<?= $o['id'] ?>">
-                        <select name="status" onchange="this.form.submit()">
-                            <?php foreach ($statusLabels as $key => [$label]): ?>
-                                <option value="<?= $key ?>" <?= $o['status'] === $key ? 'selected' : '' ?>>
-                                    <?= $label ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </form>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-        <?php if (!$orders): ?>
-            <tr><td colspan="7" style="text-align:center;padding:20px">Buyurtma yo'q</td></tr>
-        <?php endif; ?>
-        </tbody>
-    </table>
-</div>
+// Add loading states for buttons
+document.querySelectorAll('.btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        this.style.opacity = '0.7';
+        this.style.pointerEvents = 'none';
+        setTimeout(() => {
+            this.style.opacity = '1';
+            this.style.pointerEvents = 'auto';
+        }, 1000);
+    });
+});
+</script>
 </body>
 </html>
