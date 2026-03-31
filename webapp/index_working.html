@@ -472,12 +472,12 @@
                 // Enable closing confirmation
                 tg.enableClosingConfirmation();
                 
-                // Set up main button
+                // Set up main button (onClick only once!)
                 if (tg.MainButton) {
                     tg.MainButton.setText('Buyurtma berish');
                     tg.MainButton.color = '#007AFF';
                     tg.MainButton.textColor = '#FFFFFF';
-                    tg.MainButton.onClick(submitOrder);
+                    tg.MainButton.onClick(submitOrder); // Only set once here
                     console.log('Main button configured');
                 }
                 
@@ -693,12 +693,12 @@
                 cartCount.textContent = `${totalItems} ta mahsulot`;
                 cartTotal.textContent = `${formatPrice(totalPrice)} so'm`;
                 
-                // Update Telegram MainButton
-                if (tg) {
+                // Update Telegram MainButton (don't re-add onClick!)
+                if (tg && tg.MainButton) {
                     tg.MainButton.setText(`Buyurtma berish — ${formatPrice(totalPrice)} so'm`);
                     tg.MainButton.show();
                     tg.MainButton.color = '#007AFF';
-                    tg.MainButton.onClick(submitOrder);
+                    // onClick already set in initTelegram, don't add again
                 }
             } else {
                 cartSummary.classList.add('hidden');
@@ -842,16 +842,10 @@
                         tg.MainButton.showProgress();
                     }
                     
-                    // Send data and close
+                    // Send data - this will automatically close the webapp
+                    console.log('📤 About to call tg.sendData...');
                     tg.sendData(JSON.stringify(orderData));
-                    
-                    // Force close after a short delay
-                    setTimeout(() => {
-                        if (tg.close) {
-                            tg.close();
-                        }
-                    }, 500);
-                    
+                    // sendData() automatically closes the webapp, no need to call tg.close()
                     console.log('✅ Data sent to Telegram');
                 } else {
                     console.log('❌ Telegram WebApp not available or sendData not supported');

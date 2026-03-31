@@ -5,16 +5,19 @@ $webhookUrl = 'https://olmazorgo.bigsaver.ru/bot/webhook_simple.php';
 
 $url = 'https://api.telegram.org/bot' . BOT_TOKEN . '/setWebhook';
 
-$data = [
+// Use JSON format for proper array handling
+$data = json_encode([
     'url' => $webhookUrl,
-    'allowed_updates' => ['message']
-];
+    'allowed_updates' => ['message'],
+    'drop_pending_updates' => true
+]);
 
 $ch = curl_init($url);
 curl_setopt_array($ch, [
     CURLOPT_POST => true,
     CURLOPT_POSTFIELDS => $data,
     CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
 ]);
 
 $result = curl_exec($ch);
@@ -31,5 +34,5 @@ $info = curl_exec($ch);
 curl_close($ch);
 
 echo "Webhook holati:\n";
-echo $info;
+echo json_encode(json_decode($info), JSON_PRETTY_PRINT);
 ?>
