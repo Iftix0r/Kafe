@@ -428,8 +428,16 @@ $phpTgId = $_GET['tg_id'] ?? '';
             }
             tab(t) {
                 if(this.cur===t)return; this.cur=t;
-                document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById(`v-${t}`).classList.add('active');
-                document.querySelectorAll('.nav-tab').forEach(nt=>nt.classList.remove('active')); document.getElementById(`n-${t}`).classList.add('active');
+                document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); 
+                document.getElementById(`v-${t}`)?.classList.add('active');
+                document.querySelectorAll('.nav-tab').forEach(nt=>nt.classList.remove('active')); 
+                const navTab = document.getElementById(`n-${t}`);
+                if (navTab) {
+                    navTab.classList.add('active');
+                } else if (t === 'orders') {
+                    // For orders view, keep profile tab active
+                    document.getElementById('n-prof')?.classList.add('active');
+                }
                 if(t==='cart')this.rCrt(); 
                 if(t==='orders')this.loadOrders();
                 this.sy(); window.scrollTo(0,0);

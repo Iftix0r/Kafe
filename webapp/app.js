@@ -89,9 +89,15 @@ class KafeApp {
         // Update UI state
         this.currentView = tabId;
         
-        // Update Nav buttons
+        // Update Nav buttons (only for main tabs)
         document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
-        document.getElementById(`nav-${tabId}`)?.classList.add('active');
+        const navBtn = document.getElementById(`nav-${tabId}`);
+        if (navBtn) {
+            navBtn.classList.add('active');
+        } else if (tabId === 'orders') {
+            // For orders view, keep profile tab active
+            document.getElementById('nav-profile')?.classList.add('active');
+        }
 
         // Update Views
         document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
