@@ -48,7 +48,9 @@ if (!window.Telegram || !window.Telegram.WebApp) {
     updateDebug('Telegram WebApp sozlandi');
 }
 
-const MENU_API = 'https://olmazor.bigsaver.ru/bot/api/menu.php';
+// Ikkala variant ham mavjud - birini tanlang
+const MENU_API = 'https://olmazorgo.bigsaver.ru/bot/api/menu.php'; // To'liq yo'l
+// const MENU_API = '../bot/api/menu.php'; // Nisbiy yo'l (agar bir serverda bo'lsa)
 const cart = {};
 
 async function loadMenu() {

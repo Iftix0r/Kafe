@@ -15,7 +15,7 @@
         
         async function testAPI() {
             try {
-                const res = await fetch('https://olmazor.bigsaver.ru/bot/api/menu.php');
+                const res = await fetch('https://olmazorgo.bigsaver.ru/bot/api/menu.php');
                 const data = await res.json();
                 document.getElementById('result').innerHTML = 
                     '<h3>API ishlayapti!</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';

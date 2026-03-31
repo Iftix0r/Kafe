@@ -1,0 +1,19 @@
+# Asosiy .htaccess fayli
+RewriteEngine On
+
+# PHP fayllarni ishga tushirish
+AddType application/x-httpd-php .php
+
+# CORS ruxsatlari
+Header always set Access-Control-Allow-Origin "*"
+Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+Header always set Access-Control-Allow-Headers "Content-Type"
+
+# Xavfsizlik
+Options -Indexes
+
+# Telegram webhook uchun
+RewriteRule ^webhook$ bot/webhook.php [L]
+
+# API yo'llari
+RewriteRule ^api/(.*)$ bot/api/$1 [L]

@@ -29,8 +29,7 @@ if (!window.Telegram || !window.Telegram.WebApp) {
     document.body.style.color = tg.themeParams.text_color || '#000000';
 }
 
-const MENU_API = '../bot/api/menu.php'; // Nisbiy yo'l
-// const MENU_API = 'https://olmazor.bigsaver.ru/bot/api/menu.php'; // To'liq yo'l
+const MENU_API = 'https://olmazorgo.bigsaver.ru/bot/api/menu.php';
 const cart = {};
 
 async function loadMenu() {
