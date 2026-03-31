@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Debug</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f0f0f0; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        button { background: #007AFF; color: white; border: none; padding: 10px 20px; margin: 10px; border-radius: 5px; cursor: pointer; }
+        .result { margin-top: 20px; padding: 15px; background: #f8f8f8; border-radius: 5px; }
+        .success { border-left: 4px solid #4CAF50; }
+        .error { border-left: 4px solid #f44336; }
+        pre { font-size: 12px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Debug Panel</h1>
+        
+        <div>
+            <strong>Vaqt:</strong> <span id="time"></span><br>
+            <strong>URL:</strong> <span id="url"></span><br>
+            <strong>User Agent:</strong> <span id="ua"></span>
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <button onclick="testAPI()">🔗 API Test</button>
+            <button onclick="testTelegram()">📱 Telegram Test</button>
+            <button onclick="testFiles()">📁 Files Test</button>
+            <button onclick="location.reload()">🔄 Refresh</button>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('time').textContent = new Date().toLocaleString();
+        document.getElementById('url').textContent = window.location.href;
+        document.getElementById('ua').textContent = navigator.userAgent.substring(0, 80) + '...';
+        
+        async function testAPI() {
+            const result = document.getElementById('result');
+            result.innerHTML = '🔄 API test...';
+            
+            try {
+                const response = await fetch('https://olmazorgo.bigsaver.ru/bot/api/menu.php');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const text = await response.text();
+                const data = JSON.parse(text);
+                
+                result.innerHTML = `
+                    <div class="result success">
+                        <h3>✅ API ishlayapti</h3>
+                        <p><strong>Status:</strong> ${response.status}</p>
+                        <p><strong>Kategoriyalar:</strong> ${data.length}</p>
+                        <p><strong>Jami mahsulotlar:</strong> ${data.reduce((sum, cat) => sum + (cat.items?.length || 0), 0)}</p>
+                        <details>
+                            <summary>Raw Response</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                    </div>
+                `;
+                
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ API xatosi</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>URL:</strong> https://olmazorgo.bigsaver.ru/bot/api/menu.php</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function testTelegram() {
+            const result = document.getElementById('result');
+            
+            const tests = [
+                { name: 'window.Telegram', value: !!window.Telegram },
+                { name: 'Telegram.WebApp', value: !!window.Telegram?.WebApp },
+                { name: 'WebApp.ready', value: typeof window.Telegram?.WebApp?.ready === 'function' },
+                { name: 'WebApp.sendData', value: typeof window.Telegram?.WebApp?.sendData === 'function' }
+            ];
+            
+            let html = '<div class="result"><h3>📱 Telegram WebApp Test</h3>';
+            
+            tests.forEach(test => {
+                html += `<p>${test.value ? '✅' : '❌'} ${test.name}: ${test.value ? 'OK' : 'FAIL'}</p>`;
+            });
+            
+            if (window.Telegram?.WebApp) {
+                html += `<p><strong>Theme:</strong> ${JSON.stringify(window.Telegram.WebApp.themeParams)}</p>`;
+                html += `<p><strong>Version:</strong> ${window.Telegram.WebApp.version}</p>`;
+            }
+            
+            html += '</div>';
+            result.innerHTML = html;
+        }
+        
+        async function testFiles() {
+            const result = document.getElementById('result');
+            result.innerHTML = '🔄 Files test...';
+            
+            const files = [
+                'index_working.html',
+                'index_simple.html', 
+                'style_full.css',
+                'app_full.js'
+            ];
+            
+            let html = '<div class="result"><h3>📁 Files Test</h3>';
+            
+            for (const file of files) {
+                try {
+                    const response = await fetch(file, { method: 'HEAD' });
+                    html += `<p>${response.ok ? '✅' : '❌'} ${file}: ${response.status}</p>`;
+                } catch (error) {
+                    html += `<p>❌ ${file}: Error</p>`;
+                }
+            }
+            
+            html += '</div>';
+            result.innerHTML = html;
+        }
+        
+        // Auto-run API test
+        setTimeout(testAPI, 1000);
+    </script>
+</body>
+</html>

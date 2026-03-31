@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menyu</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.5;
+        }
+        
+        .hidden { display: none !important; }
+        
+        /* Loading */
+        .loading {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .spinner {
+            width: 40px; height: 40px;
+            border: 3px solid #ddd;
+            border-top: 3px solid #007AFF;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Header */
+        .header {
+            background: #fff;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .cart-icon {
+            position: relative;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+        }
+        
+        .cart-badge {
+            position: absolute;
+            top: 0; right: 0;
+            background: #007AFF;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+        }
+        
+        /* Categories */
+        .categories {
+            padding: 15px 20px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .category-btn {
+            flex-shrink: 0;
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        .category-btn.active {
+            background: #007AFF;
+            color: white;
+        }
+        
+        /* Menu */
+        .menu {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            padding-bottom: 100px;
+        }
+        
+        .menu-item {
+            background: #fff;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .item-content {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .item-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #f0f0f0;
+        }
+        
+        .no-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: #ccc;
+        }
+        
+        .item-info {
+            flex: 1;
+        }
+        
+        .item-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .item-description {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .item-price {
+            font-size: 18px;
+            font-weight: 700;
+            color: #007AFF;
+        }
+        
+        .item-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .qty-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            background: #007AFF;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .qty-btn.minus {
+            background: #ff3b30;
+        }
+        
+        .qty-display {
+            font-size: 18px;
+            font-weight: 600;
+            min-width: 30px;
+            text-align: center;
+        }
+        
+        .add-btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        /* Cart Summary */
+        .cart-summary {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border-top: 1px solid #eee;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 200;
+        }
+        
+        .cart-btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        /* Error */
+        .error {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        .error h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .retry-btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        @media (min-width: 600px) {
+            .menu {
+                grid-template-columns: 1fr 1fr;
+                padding: 20px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading -->
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Menyu yuklanmoqda...</p>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="hidden">
+        <!-- Header -->
+        <div class="header">
+            <h1>Menyu</h1>
+            <div class="cart-icon" onclick="alert('Savat: ' + getTotalItems() + ' ta mahsulot')">
+                🛒
+                <span class="cart-badge" id="cart-badge">0</span>
+            </div>
+        </div>
+
+        <!-- Categories -->
+        <div class="categories" id="categories">
+            <button class="category-btn active" onclick="filterCategory('all')">Barchasi</button>
+        </div>
+
+        <!-- Menu -->
+        <div class="menu" id="menu"></div>
+
+        <!-- Cart Summary -->
+        <div class="cart-summary hidden" id="cart-summary">
+            <div>
+                <div id="cart-count">0 ta mahsulot</div>
+                <div id="cart-total">0 so'm</div>
+            </div>
+            <button class="cart-btn" onclick="submitOrder()">Buyurtma berish</button>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let tg = window.Telegram?.WebApp;
+        let cart = {};
+        let categories = [];
+        let allItems = [];
+        
+        const MENU_API = 'https://olmazorgo.bigsaver.ru/bot/api/menu.php';
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('App starting...');
+            initTelegram();
+            setTimeout(loadMenu, 1000);
+        });
+        
+        function initTelegram() {
+            if (tg) {
+                tg.ready();
+                tg.expand();
+                tg.setBackgroundColor('#f5f5f5');
+                tg.setHeaderColor('#ffffff');
+                tg.MainButton.onClick(submitOrder);
+                console.log('Telegram WebApp ready');
+            } else {
+                console.log('Telegram WebApp not available');
+            }
+        }
+        
+        async function loadMenu() {
+            try {
+                console.log('Loading menu from:', MENU_API);
+                
+                const response = await fetch(MENU_API, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' },
+                    cache: 'no-cache'
+                });
+                
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const text = await response.text();
+                console.log('Response text:', text.substring(0, 200));
+                
+                const data = JSON.parse(text);
+                console.log('Parsed data:', data);
+                
+                if (!Array.isArray(data) || data.length === 0) {
+                    throw new Error('Menu bo\'sh yoki noto\'g\'ri format');
+                }
+                
+                categories = data;
+                allItems = data.flatMap(cat => 
+                    cat.items ? cat.items.map(item => ({...item, categoryId: cat.id})) : []
+                );
+                
+                hideLoading();
+                renderCategories();
+                renderMenu();
+                
+                console.log('Menu loaded successfully');
+                
+            } catch (error) {
+                console.error('Menu loading error:', error);
+                hideLoading();
+                showError(error.message);
+            }
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+        }
+        
+        function renderCategories() {
+            const container = document.getElementById('categories');
+            
+            categories.forEach(category => {
+                const button = document.createElement('button');
+                button.className = 'category-btn';
+                button.textContent = category.name;
+                button.onclick = () => filterCategory(category.id);
+                container.appendChild(button);
+            });
+        }
+        
+        function renderMenu(items = allItems) {
+            const container = document.getElementById('menu');
+            container.innerHTML = '';
+            
+            if (items.length === 0) {
+                container.innerHTML = '<div class="error"><h3>Mahsulotlar topilmadi</h3></div>';
+                return;
+            }
+            
+            items.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'menu-item';
+                
+                const currentQty = cart[item.id]?.quantity || 0;
+                
+                itemDiv.innerHTML = `
+                    <div class="item-content">
+                        ${item.image_url 
+                            ? `<img src="${item.image_url}" alt="${item.name}" class="item-image">`
+                            : `<div class="no-image">🍽️</div>`
+                        }
+                        <div class="item-info">
+                            <div class="item-name">${escapeHtml(item.name)}</div>
+                            ${item.description ? `<div class="item-description">${escapeHtml(item.description)}</div>` : ''}
+                            <div class="item-price">${formatPrice(item.price)} so'm</div>
+                        </div>
+                    </div>
+                    <div class="item-controls">
+                        ${currentQty > 0 ? `
+                            <div class="quantity-controls">
+                                <button class="qty-btn minus" onclick="changeQuantity(${item.id}, -1)">−</button>
+                                <span class="qty-display">${currentQty}</span>
+                                <button class="qty-btn" onclick="changeQuantity(${item.id}, 1)">+</button>
+                            </div>
+                        ` : `
+                            <button class="add-btn" onclick="addToCart(${item.id}, '${escapeHtml(item.name)}', ${item.price})">
+                                Qo'shish
+                            </button>
+                        `}
+                    </div>
+                `;
+                
+                container.appendChild(itemDiv);
+            });
+        }
+        
+        function filterCategory(categoryId) {
+            // Update active button
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            if (categoryId === 'all') {
+                renderMenu(allItems);
+            } else {
+                const filteredItems = allItems.filter(item => item.categoryId == categoryId);
+                renderMenu(filteredItems);
+            }
+        }
+        
+        function addToCart(itemId, itemName, itemPrice) {
+            cart[itemId] = {
+                id: itemId,
+                name: itemName,
+                price: parseFloat(itemPrice),
+                quantity: 1
+            };
+            
+            updateCartUI();
+            renderMenu(); // Re-render to show quantity controls
+            
+            console.log('Added to cart:', cart[itemId]);
+        }
+        
+        function changeQuantity(itemId, delta) {
+            if (!cart[itemId]) return;
+            
+            cart[itemId].quantity += delta;
+            
+            if (cart[itemId].quantity <= 0) {
+                delete cart[itemId];
+            }
+            
+            updateCartUI();
+            renderMenu(); // Re-render to update controls
+        }
+        
+        function updateCartUI() {
+            const items = Object.values(cart);
+            const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+            const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            // Update badge
+            document.getElementById('cart-badge').textContent = totalItems;
+            
+            // Update cart summary
+            const cartSummary = document.getElementById('cart-summary');
+            const cartCount = document.getElementById('cart-count');
+            const cartTotal = document.getElementById('cart-total');
+            
+            if (totalItems > 0) {
+                cartSummary.classList.remove('hidden');
+                cartCount.textContent = `${totalItems} ta mahsulot`;
+                cartTotal.textContent = `${formatPrice(totalPrice)} so'm`;
+                
+                // Update Telegram MainButton
+                if (tg) {
+                    tg.MainButton.setText(`Buyurtma berish — ${formatPrice(totalPrice)} so'm`);
+                    tg.MainButton.show();
+                    tg.MainButton.color = '#007AFF';
+                }
+            } else {
+                cartSummary.classList.add('hidden');
+                if (tg) {
+                    tg.MainButton.hide();
+                }
+            }
+        }
+        
+        function submitOrder() {
+            const items = Object.values(cart);
+            if (items.length === 0) {
+                alert('Savat bo\'sh');
+                return;
+            }
+            
+            const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            const orderData = {
+                items: items.map(item => ({
+                    menu_item_id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity
+                })),
+                total: totalPrice,
+                comment: ''
+            };
+            
+            console.log('Submitting order:', orderData);
+            
+            try {
+                if (tg) {
+                    tg.sendData(JSON.stringify(orderData));
+                } else {
+                    alert('Buyurtma yuborildi: ' + formatPrice(totalPrice) + ' so\'m');
+                }
+                
+                // Clear cart
+                cart = {};
+                updateCartUI();
+                renderMenu();
+                
+            } catch (error) {
+                console.error('Order submission error:', error);
+                alert('Buyurtma yuborishda xatolik yuz berdi');
+            }
+        }
+        
+        function getTotalItems() {
+            return Object.values(cart).reduce((sum, item) => sum + item.quantity, 0);
+        }
+        
+        function showError(message) {
+            document.getElementById('menu').innerHTML = `
+                <div class="error">
+                    <div style="font-size: 60px; margin-bottom: 20px;">😕</div>
+                    <h3>Xatolik yuz berdi</h3>
+                    <p>${message}</p>
+                    <button class="retry-btn" onclick="location.reload()">Qayta urinish</button>
+                </div>
+            `;
+        }
+        
+        function formatPrice(price) {
+            return Number(price).toLocaleString('uz-UZ');
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
