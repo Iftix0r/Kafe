@@ -1,4 +1,7 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 require_once __DIR__ . '/config.php';
 
 // Simple logging
@@ -42,6 +45,30 @@ if (isset($message['web_app_data'])) {
     logMessage("Parsed order data: " . json_encode($orderData));
     
     if ($orderData && isset($orderData['items'])) {
+        // Check if user exists in database
+        require_once __DIR__ . '/db/UserRepo.php';
+        $userRepo = new UserRepo();
+        $user = $userRepo->findByTelegramId($from['id']);
+        
+        if (!$user) {
+            logMessage("ERROR: User not found for telegram_id: " . $from['id']);
+            sendTelegramMessage($chatId, "❌ Foydalanuvchi topilmadi. Iltimos, /start buyrug'ini yuboring.");
+            exit;
+        }
+        
+        logMessage("User found: " . json_encode($user));
+        
+        // Save order to session
+        $sessionFile = sys_get_temp_dir() . "/order_session_{$chatId}.json";
+        $sessionData = [
+            'data' => $orderData,
+            'user' => $user,
+            'step' => 'phone',
+            'timestamp' => time()
+        ];
+        file_put_contents($sessionFile, json_encode($sessionData));
+        logMessage("Order saved to session: " . $sessionFile);
+        
         // Build order summary
         $summary = "📋 Buyurtma qabul qilindi!\n\n";
         $summary .= "🛒 Buyurtma tarkibi:\n";
@@ -68,6 +95,26 @@ if (isset($message['web_app_data'])) {
 if (isset($message['text']) && $message['text'] === '/start') {
     logMessage("Start command received");
     
+    // Create or update user
+    require_once __DIR__ . '/db/UserRepo.php';
+    $userRepo = new UserRepo();
+    
+    $user = $userRepo->findByTelegramId($from['id']);
+    if (!$user) {
+        // Create new user
+        $userData = [
+            'telegram_id' => $from['id'],
+            'first_name' => $from['first_name'] ?? '',
+            'last_name' => $from['last_name'] ?? '',
+            'username' => $from['username'] ?? '',
+            'phone_number' => null
+        ];
+        $userId = $userRepo->create($userData);
+        logMessage("New user created with ID: $userId");
+    } else {
+        logMessage("Existing user found: " . json_encode($user));
+    }
+    
     $welcomeText = "🍽 Olmazor Go ga xush kelibsiz!\n\n";
     $welcomeText .= "📱 Telefon raqamingizni yuboring:";
     
@@ -90,6 +137,20 @@ if (isset($message['contact'])) {
     $phone = $message['contact']['phone_number'];
     $firstName = $from['first_name'] ?? 'Foydalanuvchi';
     
+    // Update user with phone number
+    require_once __DIR__ . '/db/UserRepo.php';
+    $userRepo = new UserRepo();
+    
+    $userData = [
+        'telegram_id' => $from['id'],
+        'first_name' => $from['first_name'] ?? '',
+        'last_name' => $from['last_name'] ?? '',
+        'username' => $from['username'] ?? '',
+        'phone_number' => $phone
+    ];
+    $userRepo->create($userData); // This will update if exists due to ON DUPLICATE KEY UPDATE
+    logMessage("User phone number updated: $phone");
+    
     $text = "✅ Ro'yxatdan o'tdingiz!\n\n";
     $text .= "Menuni ochish uchun tugmani bosing:";
     
@@ -104,18 +165,169 @@ if (isset($message['contact'])) {
     exit;
 }
 
+// Handle location
+if (isset($message['location'])) {
+    logMessage("Location received");
+    
+    $lat = $message['location']['latitude'];
+    $lon = $message['location']['longitude'];
+    $address = "📍 GPS: $lat, $lon";
+    
+    // Check if there's an active order session
+    $sessionFile = sys_get_temp_dir() . "/order_session_{$chatId}.json";
+    if (file_exists($sessionFile)) {
+        $sessionData = json_decode(file_get_contents($sessionFile), true);
+        
+        if ($sessionData['step'] === 'address') {
+            logMessage("Location saved as address: $address");
+            
+            // Save address to session
+            $sessionData['address'] = $address;
+            $sessionData['step'] = 'comment';
+            file_put_contents($sessionFile, json_encode($sessionData));
+            
+            // Ask for comment
+            $keyboard = [
+                'keyboard' => [[
+                    ['text' => 'Yo\'q']
+                ]],
+                'resize_keyboard' => true,
+                'one_time_keyboard' => true,
+            ];
+            
+            sendTelegramMessage($chatId, 
+                "✅ Manzil saqlandi: $address\n\n💬 Qo'shimcha izoh bor mi?\nMasalan: 3-qavat, 12-xonadon. Kamroq tuz qo'shing.\n\nIzoh yo'q bo'lsa \"Yo'q\" deb yozing.",
+                $keyboard
+            );
+        }
+    }
+    exit;
+}
+
 // Handle regular text (phone number, address, etc.)
 if (isset($message['text'])) {
     $text = $message['text'];
     logMessage("Text message: $text");
     
-    // Simple phone validation
-    if (preg_match('/^[\+]?[0-9\s\-\(\)]{9,}$/', $text)) {
-        logMessage("Phone number detected: $text");
-        sendTelegramMessage($chatId, "✅ Telefon raqam saqlandi: $text\n\n📍 Endi manzilingizni yuboring:");
+    // Check if there's an active order session
+    $sessionFile = sys_get_temp_dir() . "/order_session_{$chatId}.json";
+    if (file_exists($sessionFile)) {
+        $sessionData = json_decode(file_get_contents($sessionFile), true);
+        logMessage("Found order session, step: " . $sessionData['step']);
+        
+        if ($sessionData['step'] === 'phone') {
+            // Validate phone number
+            $cleanPhone = preg_replace('/[^\d+]/', '', $text);
+            if (preg_match('/^(\+?998|998|8)?[0-9]{9}$/', $cleanPhone)) {
+                logMessage("Valid phone number: $text");
+                
+                // Save phone to session
+                $sessionData['phone'] = $text;
+                $sessionData['step'] = 'address';
+                file_put_contents($sessionFile, json_encode($sessionData));
+                
+                // Ask for address
+                $keyboard = [
+                    'keyboard' => [[
+                        ['text' => '📍 Joylashuvni yuborish', 'request_location' => true]
+                    ]],
+                    'resize_keyboard' => true,
+                    'one_time_keyboard' => true,
+                ];
+                
+                sendTelegramMessage($chatId, 
+                    "✅ Telefon raqam saqlandi: $text\n\n📍 Endi manzilingizni yuboring:\nMasalan: Toshkent sh., Yunusobod t., 5-mavze, 12-uy\n\nYoki joylashuvingizni yuboring 👇", 
+                    $keyboard
+                );
+            } else {
+                logMessage("Invalid phone number: $text");
+                sendTelegramMessage($chatId, "❌ Telefon raqam noto'g'ri formatda.\n\n📱 Iltimos, to'g'ri formatda yuboring:\nMasalan: +998901234567 yoki 998901234567");
+            }
+        } elseif ($sessionData['step'] === 'address') {
+            logMessage("Address received: $text");
+            
+            // Save address to session
+            $sessionData['address'] = $text;
+            $sessionData['step'] = 'comment';
+            file_put_contents($sessionFile, json_encode($sessionData));
+            
+            // Ask for comment
+            $keyboard = [
+                'keyboard' => [[
+                    ['text' => 'Yo\'q']
+                ]],
+                'resize_keyboard' => true,
+                'one_time_keyboard' => true,
+            ];
+            
+            sendTelegramMessage($chatId, 
+                "✅ Manzil saqlandi: $text\n\n💬 Qo'shimcha izoh bor mi?\nMasalan: 3-qavat, 12-xonadon. Kamroq tuz qo'shing.\n\nIzoh yo'q bo'lsa \"Yo'q\" deb yozing.",
+                $keyboard
+            );
+        } elseif ($sessionData['step'] === 'comment') {
+            logMessage("Comment received: $text");
+            
+            $comment = (strtolower($text) === 'yo\'q' || strtolower($text) === 'yoq') ? '' : $text;
+            
+            // Finalize order
+            require_once __DIR__ . '/db/OrderRepo.php';
+            $orderRepo = new OrderRepo();
+            
+            try {
+                $orderId = $orderRepo->create(
+                    $sessionData['user']['id'], 
+                    $sessionData['data']['total'], 
+                    $comment,
+                    $sessionData['phone'],
+                    $sessionData['address']
+                );
+                $orderRepo->addItems($orderId, $sessionData['data']['items']);
+                
+                logMessage("Order created with ID: $orderId");
+                
+                // Build final summary
+                $finalSummary = "📋 Buyurtma #{$orderId}\n\n";
+                $finalSummary .= "👤 Mijoz: {$sessionData['user']['first_name']} {$sessionData['user']['last_name']}\n";
+                $finalSummary .= "📱 Telefon: {$sessionData['phone']}\n";
+                $finalSummary .= "📍 Manzil: {$sessionData['address']}\n\n";
+                $finalSummary .= "🛒 Buyurtma tarkibi:\n";
+                
+                foreach ($sessionData['data']['items'] as $item) {
+                    $itemTotal = $item['price'] * $item['quantity'];
+                    $finalSummary .= "• {$item['name']} × {$item['quantity']} = " . number_format($itemTotal, 0, '.', ' ') . " so'm\n";
+                }
+                
+                $finalSummary .= "\n💰 Jami: " . number_format($sessionData['data']['total'], 0, '.', ' ') . " so'm";
+                
+                if (!empty($comment)) {
+                    $finalSummary .= "\n💬 Izoh: $comment";
+                }
+                
+                $finalSummary .= "\n⏰ Vaqt: " . date('d.m.Y H:i');
+                
+                // Send to customer
+                sendTelegramMessage($chatId, 
+                    "🎉 Buyurtmangiz muvaffaqiyatli qabul qilindi!\n\n" . 
+                    $finalSummary . 
+                    "\n\n⏰ Tayyorlanish vaqti: 15-20 daqiqa\n📞 Aloqa: +998 90 123 45 67"
+                );
+                
+                // Send to admin
+                sendTelegramMessage(ADMIN_TELEGRAM_ID, "🆕 YANGI BUYURTMA #{$orderId}\n\n" . $finalSummary);
+                
+                // Clear session
+                unlink($sessionFile);
+                logMessage("Order completed and session cleared");
+                
+            } catch (Exception $e) {
+                logMessage("ERROR creating order: " . $e->getMessage());
+                sendTelegramMessage($chatId, "❌ Buyurtma yaratishda xatolik yuz berdi. Iltimos, qayta urinib ko'ring.");
+            }
+        }
     } else {
-        logMessage("Regular text message: $text");
-        sendTelegramMessage($chatId, "✅ Ma'lumot saqlandi: $text\n\nRahmat! Tez orada siz bilan bog'lanamiz.");
+        // No active session - treat as regular message
+        logMessage("No active session, treating as regular message");
+        sendTelegramMessage($chatId, "Buyurtma berish uchun /start buyrug'ini yuboring va menyuni oching.");
     }
 }
 
@@ -129,7 +341,16 @@ function sendTelegramMessage($chatId, $text, $keyboard = null) {
     ];
     
     if ($keyboard) {
-        $params['reply_markup'] = json_encode($keyboard);
+        if (isset($keyboard['keyboard'])) {
+            // Regular keyboard
+            $params['reply_markup'] = json_encode($keyboard);
+        } elseif (isset($keyboard['inline_keyboard'])) {
+            // Inline keyboard
+            $params['reply_markup'] = json_encode($keyboard);
+        } else {
+            // Direct keyboard array
+            $params['reply_markup'] = json_encode($keyboard);
+        }
     }
     
     $url = 'https://api.telegram.org/bot' . BOT_TOKEN . '/sendMessage';
