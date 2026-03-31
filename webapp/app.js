@@ -1,169 +1,352 @@
-// Telegram WebApp mavjudligini tekshirish
-if (!window.Telegram || !window.Telegram.WebApp) {
-    console.error('Telegram WebApp mavjud emas!');
-    document.addEventListener('DOMContentLoaded', () => {
-        document.body.innerHTML = `
-            <div style="padding:20px;text-align:center;color:red">
-                <h3>Xato!</h3>
-                <p>Bu ilova faqat Telegram bot ichida ishlaydi.</p>
-                <p>Iltimos, botni Telegram orqali oching.</p>
-            </div>
-        `;
-    });
-} else {
-    const tg = window.Telegram.WebApp;
-    console.log('Telegram WebApp ishga tushmoqda...');
-    tg.ready();
-    tg.expand();
-    tg.setBackgroundColor('#ffffff');
-    tg.setHeaderColor('#ffffff');
+/**
+ * Kafe WebApp - Modern JavaScript Implementation
+ */
 
-    console.log('Telegram WebApp sozlamalari:', {
-        isExpanded: tg.isExpanded,
-        viewportHeight: tg.viewportHeight,
-        themeParams: tg.themeParams
-    });
+class KafeApp {
+    constructor() {
+        this.tg = window.Telegram?.WebApp;
+        this.cart = {};
+        this.categories = [];
+        this.currentView = 'menu';
+        this.MENU_API = 'https://olmazorgo.bigsaver.ru/bot/api/menu.php';
+        
+        this.init();
+    }
 
-    document.documentElement.style.background = '#ffffff';
-    document.body.style.background = '#ffffff';
-    document.body.style.color = tg.themeParams.text_color || '#000000';
-}
+    async init() {
+        console.log('🚀 Kafe App initializing...');
+        this.initTelegram();
+        this.setupEventListeners();
+        
+        // Initial load
+        await this.loadMenu();
+        this.renderProfile();
+        
+        // Hide loading screen after data is ready
+        setTimeout(() => {
+            this.hideLoading();
+        }, 800);
+    }
 
-const MENU_API = 'https://olmazorgo.bigsaver.ru/bot/api/menu.php';
-const cart = {};
-
-async function loadMenu() {
-    console.log('Menu yuklanmoqda...');
-    document.getElementById('menu').innerHTML = '<p style="padding:20px;text-align:center">Menu yuklanmoqda...</p>';
-    
-    try {
-        console.log('API chaqirilmoqda:', MENU_API);
-        const res = await fetch(MENU_API);
-        console.log('Javob holati:', res.status);
-        
-        if (!res.ok) {
-            throw new Error(`Server xatosi: ${res.status} - ${res.statusText}`);
-        }
-        
-        const text = await res.text();
-        console.log('Server javobi:', text);
-        
-        let categories;
-        try {
-            categories = JSON.parse(text);
-        } catch (parseError) {
-            throw new Error('JSON parse xatosi: ' + parseError.message);
-        }
-        
-        console.log('Kategoriyalar yuklandi:', categories);
-        
-        if (!Array.isArray(categories) || categories.length === 0) {
-            document.getElementById('menu').innerHTML = '<p style="padding:20px;text-align:center">Menyu bo\'sh yoki noto\'g\'ri format</p>';
+    initTelegram() {
+        if (!this.tg) {
+            console.warn('Telegram WebApp not available');
             return;
         }
+
+        this.tg.ready();
+        this.tg.expand();
+        this.tg.enableClosingConfirmation();
         
-        renderCategories(categories);
-        renderMenu(categories);
-        console.log('Menu muvaffaqiyatli yuklandi');
+        // Colors & Theme
+        this.tg.setBackgroundColor('#ffffff');
+        this.tg.setHeaderColor('#ffffff');
+
+        // Main Button Setup
+        this.tg.MainButton.onClick(() => {
+            if (this.currentView === 'cart' || this.currentView === 'menu') {
+                this.submitOrder();
+            }
+        });
+
+        console.log('✅ Telegram initialized:', this.tg.initDataUnsafe?.user?.first_name);
+    }
+
+    setupEventListeners() {
+        // Comment character counter
+        const commentArea = document.getElementById('comment');
+        const counter = document.getElementById('comment-count');
         
-    } catch (e) {
-        console.error('Menu yuklashda xato:', e);
-        document.getElementById('menu').innerHTML = `
-            <div style="padding:20px;color:red;text-align:center">
-                <h3>Xato yuz berdi:</h3>
-                <p>${e.message}</p>
-                <p style="font-size:12px;margin-top:10px">API: ${MENU_API}</p>
-                <button onclick="loadMenu()" style="margin-top:10px;padding:8px 16px;background:#2481cc;color:white;border:none;border-radius:4px">Qayta urinish</button>
+        commentArea?.addEventListener('input', (e) => {
+            const length = e.target.value.length;
+            if (counter) counter.textContent = length;
+        });
+    }
+
+    async loadMenu() {
+        try {
+            const response = await fetch(this.MENU_API);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            
+            this.categories = await response.json();
+            this.renderCategories();
+            this.renderMenu();
+        } catch (error) {
+            console.error('❌ Menu load error:', error);
+            document.getElementById('menu').innerHTML = `
+                <div style="padding:40px;text-align:center;color:red">
+                    <p>Menyuni yuklab bo'lmadi.</p>
+                    <button class="primary-btn" onclick="location.reload()">Qayta urinish</button>
+                </div>
+            `;
+        }
+    }
+
+    hideLoading() {
+        document.getElementById('loading-screen')?.classList.add('hidden');
+        document.getElementById('app')?.classList.remove('hidden');
+    }
+
+    switchTab(tabId) {
+        if (this.currentView === tabId) return;
+
+        // Update UI state
+        this.currentView = tabId;
+        
+        // Update Nav buttons
+        document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`nav-${tabId}`)?.classList.add('active');
+
+        // Update Views
+        document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+        document.getElementById(`view-${tabId}`)?.classList.add('active');
+
+        // Header Update
+        this.updateHeader();
+
+        // Specific View Rendering
+        if (tabId === 'cart') this.renderCart();
+        if (tabId === 'menu') this.updateMainButton(); // Re-sync MainButton
+        
+        // Trigger haptic feedback
+        this.tg?.HapticFeedback.selectionChanged();
+        
+        window.scrollTo(0, 0);
+    }
+
+    updateHeader() {
+        const texts = { menu: 'Menyu', cart: 'Savat', profile: 'Profil' };
+        const emojis = { menu: '🍽️', cart: '🛒', profile: '👤' };
+        
+        document.getElementById('header-text').textContent = texts[this.currentView];
+        document.getElementById('header-emoji').textContent = emojis[this.currentView];
+    }
+
+    renderCategories() {
+        const container = document.getElementById('categories');
+        if (!container) return;
+
+        container.innerHTML = '';
+        this.categories.forEach((cat, i) => {
+            const btn = document.createElement('button');
+            btn.className = `cat-btn ${i === 0 ? 'active' : ''}`;
+            btn.textContent = cat.name;
+            btn.onclick = (e) => {
+                document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(`cat-${cat.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            };
+            container.appendChild(btn);
+        });
+    }
+
+    renderMenu() {
+        const container = document.getElementById('menu');
+        if (!container) return;
+
+        container.innerHTML = '';
+        this.categories.forEach(cat => {
+            const section = document.createElement('section');
+            section.id = `cat-${cat.id}`;
+            section.innerHTML = `<h2 class="section-title">${cat.name}</h2>`;
+            
+            const grid = document.createElement('div');
+            grid.className = 'items-grid';
+            
+            cat.items.forEach(item => {
+                grid.appendChild(this.createItemCard(item));
+            });
+            
+            section.appendChild(grid);
+            container.appendChild(section);
+        });
+    }
+
+    createItemCard(item) {
+        const card = document.createElement('div');
+        card.className = 'item-card';
+        
+        const qty = this.cart[item.id]?.quantity || 0;
+        
+        card.innerHTML = `
+            ${item.image_url ? `<img src="${item.image_url}" alt="${item.name}" loading="lazy">` : `<div class="no-img">🍽️</div>`}
+            <div class="item-info">
+                <div class="item-name">${item.name}</div>
+                ${item.description ? `<div class="item-desc">${item.description}</div>` : ''}
+                <div class="item-price">${this.formatPrice(item.price)} so'm</div>
+            </div>
+            <div class="item-controls" id="controls-${item.id}">
+                ${qty > 0 ? this.getQtyControlsHtml(item, qty) : `<button class="add-btn" onclick="app.addToCart(${item.id}, '${item.name}', ${item.price})">Qo'shish</button>`}
+            </div>
+        `;
+        return card;
+    }
+
+    getQtyControlsHtml(item, qty) {
+        return `
+            <div class="qty-controls">
+                <button class="qty-btn" onclick="app.changeQty(${item.id}, -1)">−</button>
+                <span class="qty-display">${qty}</span>
+                <button class="qty-btn" onclick="app.changeQty(${item.id}, 1)">+</button>
             </div>
         `;
     }
-}
 
-function renderCategories(categories) {
-    const el = document.getElementById('categories');
-    categories.forEach((cat, i) => {
-        const btn = document.createElement('button');
-        btn.className = 'cat-btn' + (i === 0 ? ' active' : '');
-        btn.textContent = cat.name;
-        btn.onclick = () => {
-            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById('cat-' + cat.id)?.scrollIntoView({ behavior: 'smooth' });
-        };
-        el.appendChild(btn);
-    });
-}
+    addToCart(id, name, price) {
+        this.cart[id] = { id, name, price, quantity: 1 };
+        this.updateItemDisplay(id);
+        this.updateMainButton();
+        this.tg?.HapticFeedback.impactOccurred('light');
+    }
 
-function renderMenu(categories) {
-    const el = document.getElementById('menu');
-    categories.forEach(cat => {
-        const section = document.createElement('div');
-        section.id = 'cat-' + cat.id;
-        section.innerHTML = `<div class="section-title">${cat.name}</div>`;
-        const grid = document.createElement('div');
-        grid.className = 'items-grid';
-        cat.items.forEach(item => grid.appendChild(createCard(item)));
-        section.appendChild(grid);
-        el.appendChild(section);
-    });
-}
+    changeQty(id, delta) {
+        if (!this.cart[id]) return;
+        
+        this.cart[id].quantity += delta;
+        if (this.cart[id].quantity <= 0) {
+            delete this.cart[id];
+        }
+        
+        this.updateItemDisplay(id);
+        this.updateMainButton();
+        if (this.currentView === 'cart') this.renderCart();
+        this.tg?.HapticFeedback.impactOccurred('light');
+    }
 
-function createCard(item) {
-    const card = document.createElement('div');
-    card.className = 'item-card';
-    const img = item.image_url
-        ? `<img src="${item.image_url}" alt="${item.name}" loading="lazy">`
-        : `<div class="no-img">🍽</div>`;
-    card.innerHTML = `
-        ${img}
-        <div class="item-info">
-            <div class="item-name">${item.name}</div>
-            ${item.description ? `<div class="item-desc">${item.description}</div>` : ''}
-            <div class="item-price">${formatPrice(item.price)} so'm</div>
-        </div>
-        <div class="item-controls">
-            <button class="qty-btn" onclick="changeQty(${item.id}, -1, this)">−</button>
-            <span class="qty-display" id="qty-${item.id}">0</span>
-            <button class="qty-btn" onclick="changeQty(${item.id}, 1, this)" data-item='${JSON.stringify({id: item.id, name: item.name, price: parseFloat(item.price)})}'>+</button>
-        </div>`;
-    return card;
-}
+    updateItemDisplay(id) {
+        const container = document.getElementById(`controls-${id}`);
+        if (!container) return;
+        
+        const item = this.findItemById(id);
+        const qty = this.cart[id]?.quantity || 0;
+        
+        container.innerHTML = qty > 0 
+            ? this.getQtyControlsHtml(item, qty) 
+            : `<button class="add-btn" onclick="app.addToCart(${item.id}, '${item.name}', ${item.price})">Qo'shish</button>`;
+    }
 
-function changeQty(id, delta, btn) {
-    const itemData = JSON.parse(btn.closest('.item-controls').querySelector('[data-item]').dataset.item);
-    cart[id] = cart[id] || { ...itemData, quantity: 0 };
-    cart[id].quantity = Math.max(0, cart[id].quantity + delta);
-    if (cart[id].quantity === 0) delete cart[id];
-    document.getElementById('qty-' + id).textContent = cart[id]?.quantity ?? 0;
-    updateMainButton();
-}
+    updateMainButton() {
+        const items = Object.values(this.cart);
+        const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
+        const count = items.reduce((s, i) => s + i.quantity, 0);
 
-function updateMainButton() {
-    const items = Object.values(cart);
-    const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
-    if (items.length === 0) {
-        tg.MainButton.hide();
-    } else {
-        tg.MainButton.setText(`🛒 Buyurtma berish — ${formatPrice(total)} so'm`);
-        tg.MainButton.show();
-        tg.MainButton.color = tg.themeParams.button_color || '#2481cc';
+        // Header Badge
+        const badge = document.getElementById('cart-badge');
+        if (badge) {
+            badge.textContent = count;
+            badge.style.display = count > 0 ? 'block' : 'none';
+        }
+
+        if (count > 0 && this.tg) {
+            this.tg.MainButton.setText(`🛒 Buyurtma berish — ${this.formatPrice(total)} so'm`);
+            this.tg.MainButton.show();
+            this.tg.MainButton.color = '#2481cc';
+        } else if (this.tg) {
+            this.tg.MainButton.hide();
+        }
+    }
+
+    renderCart() {
+        const list = document.getElementById('cart-items-list');
+        const empty = document.getElementById('cart-empty');
+        const summary = document.getElementById('cart-summary-details');
+        
+        const items = Object.values(this.cart);
+        
+        if (items.length === 0) {
+            list.innerHTML = '';
+            empty.classList.remove('hidden');
+            summary.classList.add('hidden');
+            this.tg?.MainButton.hide();
+        } else {
+            empty.classList.add('hidden');
+            summary.classList.remove('hidden');
+            list.innerHTML = '';
+            
+            items.forEach(item => {
+                const itemData = this.findItemById(item.id);
+                const row = document.createElement('div');
+                row.className = 'cart-item';
+                row.innerHTML = `
+                    ${itemData?.image_url ? `<img src="${itemData.image_url}" class="cart-item-img">` : `<div class="cart-item-img no-img" style="font-size:1.5rem">🍽️</div>`}
+                    <div class="cart-item-info">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-price">${this.formatPrice(item.price)} so'm</div>
+                    </div>
+                    <div class="cart-item-controls">
+                        <button class="qty-btn" style="width:28px;height:28px" onclick="app.changeQty(${item.id}, -1)">−</button>
+                        <span class="qty-display">${item.quantity}</span>
+                        <button class="qty-btn" style="width:28px;height:28px" onclick="app.changeQty(${item.id}, 1)">+</button>
+                    </div>
+                `;
+                list.appendChild(row);
+            });
+            
+            const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
+            const count = items.reduce((s, i) => s + i.quantity, 0);
+            
+            document.getElementById('summary-items-count').textContent = `${count} ta`;
+            document.getElementById('summary-total-price').textContent = `${this.formatPrice(total)} so'm`;
+            
+            this.updateMainButton();
+        }
+    }
+
+    renderProfile() {
+        if (!this.tg || !this.tg.initDataUnsafe?.user) return;
+        
+        const user = this.tg.initDataUnsafe.user;
+        document.getElementById('user-full-name').textContent = `${user.first_name} ${user.last_name || ''}`;
+        document.getElementById('user-telegram-id').textContent = user.username ? `@${user.username}` : `ID: ${user.id}`;
+        
+        if (user.photo_url) {
+            const avatar = document.getElementById('user-avatar');
+            avatar.innerHTML = `<img src="${user.photo_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`;
+        }
+    }
+
+    findItemById(id) {
+        for (const cat of this.categories) {
+            const item = cat.items.find(i => i.id == id);
+            if (item) return item;
+        }
+        return null;
+    }
+
+    formatPrice(n) {
+        return Number(n).toLocaleString('uz-UZ').replace(/,/g, ' ');
+    }
+
+    submitOrder() {
+        const items = Object.values(this.cart).map(i => ({
+            menu_item_id: i.id,
+            name: i.name,
+            price: i.price,
+            quantity: i.quantity,
+        }));
+        
+        if (items.length === 0) return;
+        
+        const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
+        const comment = document.getElementById('comment').value.trim();
+        
+        const data = JSON.stringify({ items, total, comment });
+        
+        // Show success
+        document.getElementById('success-animation').classList.remove('hidden');
+        this.tg?.HapticFeedback.notificationOccurred('success');
+        
+        setTimeout(() => {
+            this.tg?.sendData(data);
+            this.tg?.close();
+        }, 2000);
     }
 }
 
-tg.MainButton.onClick(() => {
-    const items = Object.values(cart).map(i => ({
-        menu_item_id: i.id,
-        name: i.name,
-        price: i.price,
-        quantity: i.quantity,
-    }));
-    const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
-    const comment = document.getElementById('comment').value.trim();
-    tg.sendData(JSON.stringify({ items, total, comment }));
+// Global initialization
+let app;
+window.addEventListener('DOMContentLoaded', () => {
+    app = new KafeApp();
+    // Expose app globally for onclick handlers
+    window.app = app;
 });
-
-function formatPrice(n) {
-    return Number(n).toLocaleString('uz-UZ');
-}
-
-loadMenu();
