@@ -1,29 +1,184 @@
 <!DOCTYPE html>
-<html>
+<html lang="uz">
 <head>
-    <title>Test</title>
-    <style>body{font-family:Arial;padding:20px;background:#fff}</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍽 Olmazor Go - Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 3rem 2rem;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        .logo { font-size: 4rem; margin-bottom: 1rem; }
+        h1 { font-size: 2rem; margin-bottom: 1rem; font-weight: 700; }
+        .info { margin: 2rem 0; }
+        .info div { 
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+        .buttons { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 1rem 2rem;
+            border-radius: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        #result {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success { border-left: 4px solid #10b981; }
+        .error { border-left: 4px solid #ef4444; }
+        pre { white-space: pre-wrap; font-size: 0.9rem; }
+    </style>
 </head>
 <body>
-    <h1>Test sahifa</h1>
-    <p>Vaqt: <span id="time"></span></p>
-    <button onclick="testAPI()">API Test</button>
-    <div id="result"></div>
-    
+    <div class="container">
+        <div class="logo">🍽</div>
+        <h1>Olmazor Go Test</h1>
+        
+        <div class="info">
+            <div>⏰ Vaqt: <span id="time"></span></div>
+            <div>🌐 URL: <span id="url"></span></div>
+            <div>📱 User Agent: <span id="ua"></span></div>
+        </div>
+        
+        <div class="buttons">
+            <button onclick="testAPI()">🔗 API Test</button>
+            <button onclick="testWebApp()">📱 WebApp Test</button>
+            <button onclick="location.reload()">🔄 Refresh</button>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
     <script>
-        document.getElementById('time').textContent = new Date().toLocaleString();
+        // Update info
+        document.getElementById('time').textContent = new Date().toLocaleString('uz-UZ');
+        document.getElementById('url').textContent = window.location.href;
+        document.getElementById('ua').textContent = navigator.userAgent.substring(0, 50) + '...';
         
         async function testAPI() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<div>🔄 API test qilinmoqda...</div>';
+            
             try {
-                const res = await fetch('https://olmazorgo.bigsaver.ru/bot/api/menu.php');
-                const data = await res.json();
-                document.getElementById('result').innerHTML = 
-                    '<h3>API ishlayapti!</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
-            } catch (e) {
-                document.getElementById('result').innerHTML = 
-                    '<h3 style="color:red">API xatosi:</h3><p>' + e.message + '</p>';
+                const startTime = Date.now();
+                const response = await fetch('https://olmazorgo.bigsaver.ru/bot/api/menu.php', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    cache: 'no-cache'
+                });
+                
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const text = await response.text();
+                let data;
+                
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    throw new Error(`JSON Parse Error: ${e.message}\\nResponse: ${text.substring(0, 200)}...`);
+                }
+                
+                result.innerHTML = `
+                    <div class="success">
+                        <h3>✅ API Test Muvaffaqiyatli</h3>
+                        <p><strong>Response Time:</strong> ${responseTime}ms</p>
+                        <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
+                        <p><strong>Categories:</strong> ${data.length}</p>
+                        <p><strong>Total Items:</strong> ${data.reduce((sum, cat) => sum + (cat.items?.length || 0), 0)}</p>
+                        <details style="margin-top: 1rem;">
+                            <summary style="cursor: pointer; font-weight: 600;">📄 Raw Response</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                    </div>
+                `;
+                
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="error">
+                        <h3>❌ API Test Xatosi</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>URL:</strong> https://olmazorgo.bigsaver.ru/bot/api/menu.php</p>
+                        <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+                    </div>
+                `;
             }
         }
+        
+        function testWebApp() {
+            const result = document.getElementById('result');
+            
+            const tests = [
+                { name: 'Telegram WebApp', test: () => !!window.Telegram?.WebApp },
+                { name: 'Fetch API', test: () => !!window.fetch },
+                { name: 'Local Storage', test: () => !!window.localStorage },
+                { name: 'CSS Grid Support', test: () => CSS.supports('display', 'grid') },
+                { name: 'ES6 Support', test: () => { try { eval('const x = () => {}'); return true; } catch(e) { return false; } } }
+            ];
+            
+            let html = '<div class="success"><h3>🔧 WebApp Compatibility Test</h3>';
+            
+            tests.forEach(({name, test}) => {
+                const passed = test();
+                html += `<p>${passed ? '✅' : '❌'} ${name}: ${passed ? 'Supported' : 'Not Supported'}</p>`;
+            });
+            
+            html += `
+                <p><strong>Screen:</strong> ${screen.width}x${screen.height}</p>
+                <p><strong>Viewport:</strong> ${window.innerWidth}x${window.innerHeight}</p>
+                <p><strong>Device Pixel Ratio:</strong> ${window.devicePixelRatio}</p>
+                <p><strong>Connection:</strong> ${navigator.connection?.effectiveType || 'Unknown'}</p>
+            </div>`;
+            
+            result.innerHTML = html;
+        }
+        
+        // Auto-run API test after 2 seconds
+        setTimeout(testAPI, 2000);
     </script>
 </body>
 </html>

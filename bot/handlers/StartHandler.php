@@ -23,38 +23,65 @@ class StartHandler {
                 'username'     => $from['username'] ?? '',
                 'phone_number' => $message['contact']['phone_number'],
             ]);
-            $this->sendMenuButton($chatId);
+            $this->sendWelcomeMessage($chatId, $from['first_name'] ?? 'Foydalanuvchi');
             return;
         }
 
         // /start command
         $user = $this->userRepo->findByTelegramId($from['id']);
         if ($user && $user['phone_number']) {
-            $this->sendMenuButton($chatId);
+            $this->sendMenuButton($chatId, $from['first_name'] ?? 'Foydalanuvchi');
         } else {
-            $this->requestContact($chatId);
+            $this->requestContact($chatId, $from['first_name'] ?? 'Foydalanuvchi');
         }
     }
 
-    private function requestContact(int $chatId): void {
+    private function requestContact(int $chatId, string $firstName): void {
         $this->sendRequest('sendMessage', [
             'chat_id' => $chatId,
-            'text'    => "Assalomu alaykum! 👋\nIltimos, telefon raqamingizni yuboring:",
+            'text'    => "🍽 <b>Olmazor Go</b> ga xush kelibsiz, {$firstName}!\n\n" .
+                        "🚀 Eng mazali taomlarni tez va oson buyurtma qiling!\n\n" .
+                        "📱 Davom etish uchun telefon raqamingizni yuboring:",
+            'parse_mode' => 'HTML',
             'reply_markup' => json_encode([
-                'keyboard' => [[['text' => '📱 Telefon raqamni yuborish', 'request_contact' => true]]],
+                'keyboard' => [[
+                    ['text' => '📱 Telefon raqamni yuborish', 'request_contact' => true]
+                ]],
                 'resize_keyboard' => true,
                 'one_time_keyboard' => true,
             ]),
         ]);
     }
 
-    private function sendMenuButton(int $chatId): void {
+    private function sendWelcomeMessage(int $chatId, string $firstName): void {
         $this->sendRequest('sendMessage', [
-            'chat_id'      => $chatId,
-            'text'         => '✅ Ro\'yxatdan o\'tdingiz! Menuni ochish uchun tugmani bosing:',
+            'chat_id' => $chatId,
+            'text' => "🎉 <b>Tabriklaymiz, {$firstName}!</b>\n\n" .
+                     "✅ Siz muvaffaqiyatli ro'yxatdan o'tdingiz!\n" .
+                     "🍽 Endi mazali taomlarni buyurtma qilishingiz mumkin.\n\n" .
+                     "👇 Menuni ochish uchun tugmani bosing:",
+            'parse_mode' => 'HTML',
             'reply_markup' => json_encode([
                 'inline_keyboard' => [[
-                    ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL]],
+                    ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL . 'index_modern.html']],
+                ]],
+                'remove_keyboard' => true
+            ]),
+        ]);
+    }
+
+    private function sendMenuButton(int $chatId, string $firstName): void {
+        $this->sendRequest('sendMessage', [
+            'chat_id'      => $chatId,
+            'text'         => "Assalomu alaykum, {$firstName}! 👋\n\n" .
+                             "🍽 <b>Olmazor Go</b> dan buyurtma berish uchun menuni oching:\n\n" .
+                             "🔥 Yangi taomlar qo'shildi!\n" .
+                             "⚡ Tez yetkazib berish\n" .
+                             "💰 Eng yaxshi narxlar",
+            'parse_mode' => 'HTML',
+            'reply_markup' => json_encode([
+                'inline_keyboard' => [[
+                    ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL . 'index_modern.html']],
                 ]],
             ]),
         ]);
@@ -67,8 +94,13 @@ class StartHandler {
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => $params,
             CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 10,
         ]);
-        curl_exec($ch);
+        $result = curl_exec($ch);
         curl_close($ch);
+        
+        if ($result === false) {
+            error_log("Telegram API request failed for method: $method");
+        }
     }
 }
