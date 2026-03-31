@@ -545,43 +545,43 @@
             initTGData() {
                 if (!this.tg) return;
                 
-                console.log('📊 Syncing TG Data...');
-                // Colors sync with Telegram Theme
-                const btnColor = this.tg.themeParams?.button_color;
-                if (btnColor) document.documentElement.style.setProperty('--primary', btnColor);
-                
                 // Try multiple sources for user data
-                const user = this.tg.initDataUnsafe?.user || this.parseInitData()?.user;
+                let user = this.tg.initDataUnsafe?.user;
+                
+                // Fallback: Parse from raw initData string if initDataUnsafe is empty
+                if (!user && this.tg.initData) {
+                    try {
+                        const params = new URLSearchParams(this.tg.initData);
+                        const userStr = params.get('user');
+                        if (userStr) {
+                            user = JSON.parse(userStr);
+                        }
+                    } catch (e) {
+                        console.error('Failed to parse initData user:', e);
+                    }
+                }
                 
                 if (user) {
-                    console.log('👤 User found:', user);
                     const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
                     const nameEl = document.getElementById('u-name');
                     const idEl = document.getElementById('u-id');
+                    const avatarEl = document.getElementById('u-avatar');
                     
                     if (nameEl) nameEl.textContent = fullName || 'Foydalanuvchi';
                     if (idEl) idEl.textContent = user.username ? '@' + user.username : 'ID: ' + user.id;
                     
-                    if (user.photo_url) {
-                        const avatarEl = document.getElementById('u-avatar');
-                        if (avatarEl) {
-                            avatarEl.innerHTML = `<img src="${user.photo_url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='👤'">`;
-                        }
+                    if (user.photo_url && avatarEl) {
+                        avatarEl.innerHTML = `<img src="${user.photo_url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='👤'">`;
                     }
                 } else {
-                    console.warn('❌ User data still missing');
+                    // Final fallback to avoid "Mehmon" if we are clearly in Telegram
+                    const nameEl = document.getElementById('u-name');
+                    if (nameEl && nameEl.textContent === 'Mehmon') {
+                        nameEl.textContent = 'Foydalanuvchi';
+                    }
                 }
                 
                 this.tg.MainButton.hide();
-            }
-
-            parseInitData() {
-                if (!this.tg.initData) return null;
-                try {
-                    return Object.fromEntries(new URLSearchParams(this.tg.initData));
-                } catch (e) {
-                    return null;
-                }
             }
 
             async fetchMenu() {
