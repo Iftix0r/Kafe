@@ -2,6 +2,10 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
+// Theme ranglarini darhol o'rnatish
+document.body.style.background = tg.themeParams.bg_color || '#ffffff';
+document.body.style.color = tg.themeParams.text_color || '#000000';
+
 const MENU_API = '/bot/api/menu.php';
 const cart = {};
 
