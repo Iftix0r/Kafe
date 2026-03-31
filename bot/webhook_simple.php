@@ -161,12 +161,13 @@ if (isset($message['text']) && $message['text'] === '/start') {
         logMessage("Returning user with phone: " . $user['phone_number']);
         
         $welcomeText = "🍽 Xush kelibsiz, " . ($from['first_name'] ?? '') . "!\n\n";
-        $welcomeText .= "👇 Buyurtma berish uchun menyuni oching:";
+        $welcomeText .= "👇 Pastdagi tugmalardan birini tanlang:";
         
         $keyboard = [
-            'keyboard' => [[
-                ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL]]
-            ]],
+            'keyboard' => [
+                [['text' => '🍽 Menu', 'web_app' => ['url' => WEBAPP_URL]]],
+                [['text' => '🛒 Savat'], ['text' => '👤 Profil']]
+            ],
             'resize_keyboard' => true,
         ];
         
@@ -287,6 +288,54 @@ if (isset($message['text'])) {
     if (strpos($text, '/') === 0) {
         logMessage("Unknown command: $text");
         sendTelegramMessage($chatId, "Noma'lum buyruq. /start buyrug'ini yuboring.");
+        exit;
+    }
+    
+    // ===== Handle Savat button =====
+    if ($text === '🛒 Savat' || mb_strtolower($text) === 'savat') {
+        logMessage("Cart button pressed");
+        
+        $sessionFile = getSessionFile($chatId);
+        if (file_exists($sessionFile)) {
+            $sessionData = json_decode(file_get_contents($sessionFile), true);
+            if ($sessionData && isset($sessionData['data']['items'])) {
+                $cartText = "🛒 Sizning savatingiz:\n\n";
+                foreach ($sessionData['data']['items'] as $item) {
+                    $itemTotal = ($item['price'] ?? 0) * ($item['quantity'] ?? 1);
+                    $cartText .= "  " . ($item['name'] ?? '') . " x " . ($item['quantity'] ?? 1) . " = " . number_format($itemTotal, 0, '.', ' ') . " so'm\n";
+                }
+                $total = $sessionData['data']['total'] ?? 0;
+                $cartText .= "\n💰 Jami: " . number_format($total, 0, '.', ' ') . " so'm";
+                $cartText .= "\n\nBuyurtmani davom ettirish uchun kerakli ma'lumotlarni yuboring.";
+                sendTelegramMessage($chatId, $cartText);
+            } else {
+                sendTelegramMessage($chatId, "🛒 Savatingiz bo'sh.\n\n🍽 Menuni ochib mahsulot tanlang!");
+            }
+        } else {
+            sendTelegramMessage($chatId, "🛒 Savatingiz bo'sh.\n\n🍽 Menuni ochib mahsulot tanlang!");
+        }
+        exit;
+    }
+    
+    // ===== Handle Profil button =====
+    if ($text === '👤 Profil' || mb_strtolower($text) === 'profil') {
+        logMessage("Profile button pressed");
+        
+        $user = getOrCreateUser($from);
+        
+        $profileText = "👤 Sizning profilingiz:\n\n";
+        $profileText .= "📛 Ism: " . ($from['first_name'] ?? '') . " " . ($from['last_name'] ?? '') . "\n";
+        if (!empty($from['username'])) {
+            $profileText .= "📎 Username: @" . $from['username'] . "\n";
+        }
+        if ($user && !empty($user['phone_number'])) {
+            $profileText .= "📱 Telefon: " . $user['phone_number'] . "\n";
+        }
+        if ($user && !empty($user['created_at'])) {
+            $profileText .= "📅 Ro'yxatdan o'tgan: " . $user['created_at'] . "\n";
+        }
+        
+        sendTelegramMessage($chatId, $profileText);
         exit;
     }
     
@@ -411,9 +460,10 @@ if (isset($message['text'])) {
                 
                 // Send to customer - use regular keyboard for web_app
                 $keyboard = [
-                    'keyboard' => [[
-                        ['text' => '🍽 Yangi buyurtma', 'web_app' => ['url' => WEBAPP_URL]]
-                    ]],
+                    'keyboard' => [
+                        [['text' => '🍽 Menu', 'web_app' => ['url' => WEBAPP_URL]]],
+                        [['text' => '🛒 Savat'], ['text' => '👤 Profil']]
+                    ],
                     'resize_keyboard' => true,
                 ];
                 
@@ -438,9 +488,10 @@ if (isset($message['text'])) {
                 unlink($sessionFile);
                 
                 $keyboard = [
-                    'keyboard' => [[
-                        ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL]]
-                    ]],
+                    'keyboard' => [
+                        [['text' => '🍽 Menu', 'web_app' => ['url' => WEBAPP_URL]]],
+                        [['text' => '🛒 Savat'], ['text' => '👤 Profil']]
+                    ],
                     'resize_keyboard' => true,
                 ];
                 
@@ -462,9 +513,10 @@ if (isset($message['text'])) {
         logMessage("No active session, treating as regular message");
         
         $keyboard = [
-            'keyboard' => [[
-                ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL]]
-            ]],
+            'keyboard' => [
+                [['text' => '🍽 Menu', 'web_app' => ['url' => WEBAPP_URL]]],
+                [['text' => '🛒 Savat'], ['text' => '👤 Profil']]
+            ],
             'resize_keyboard' => true,
         ];
         
