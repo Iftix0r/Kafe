@@ -804,13 +804,17 @@
             };
             
             console.log('📤 Submitting order:', orderData);
+            console.log('📤 Order JSON:', JSON.stringify(orderData));
             
             try {
                 // Send to Telegram - WebApp yopiladi va bot davom etadi
                 if (tg) {
+                    console.log('📱 Sending via Telegram WebApp...');
                     tg.sendData(JSON.stringify(orderData));
+                    console.log('✅ Data sent to Telegram');
                 } else {
-                    alert('Buyurtma yuborildi: ' + formatPrice(totalPrice) + ' so\'m');
+                    console.log('❌ Telegram WebApp not available');
+                    alert('Telegram WebApp mavjud emas. Debug: ' + JSON.stringify(orderData));
                 }
                 
                 // Clear cart
@@ -820,7 +824,7 @@
                 
             } catch (error) {
                 console.error('❌ Order submission error:', error);
-                alert('Buyurtma yuborishda xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.');
+                alert('Buyurtma yuborishda xatolik: ' + error.message);
             }
         }
         
