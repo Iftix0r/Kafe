@@ -20,7 +20,6 @@ class KafeApp {
         
         // Initial load
         await this.loadMenu();
-        this.renderProfile();
         
         // Hide loading screen after data is ready
         setTimeout(() => {
@@ -113,8 +112,8 @@ class KafeApp {
     }
 
     updateHeader() {
-        const texts = { menu: 'Menyu', cart: 'Savat', profile: 'Profil' };
-        const emojis = { menu: '🍽️', cart: '🛒', profile: '👤' };
+        const texts = { menu: 'Menyu', cart: 'Savat' };
+        const emojis = { menu: '🍽️', cart: '🛒' };
         
         document.getElementById('header-text').textContent = texts[this.currentView];
         document.getElementById('header-emoji').textContent = emojis[this.currentView];
@@ -298,18 +297,7 @@ class KafeApp {
         }
     }
 
-    renderProfile() {
-        if (!this.tg || !this.tg.initDataUnsafe?.user) return;
-        
-        const user = this.tg.initDataUnsafe.user;
-        document.getElementById('user-full-name').textContent = `${user.first_name} ${user.last_name || ''}`;
-        document.getElementById('user-telegram-id').textContent = user.username ? `@${user.username}` : `ID: ${user.id}`;
-        
-        if (user.photo_url) {
-            const avatar = document.getElementById('user-avatar');
-            avatar.innerHTML = `<img src="${user.photo_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`;
-        }
-    }
+
 
     findItemById(id) {
         for (const cat of this.categories) {
