@@ -1,30 +1,82 @@
-const tg = window.Telegram.WebApp;
-tg.ready();
-tg.expand();
-tg.setBackgroundColor('#ffffff');
-tg.setHeaderColor('#ffffff');
+// Telegram WebApp mavjudligini tekshirish
+if (!window.Telegram || !window.Telegram.WebApp) {
+    console.error('Telegram WebApp mavjud emas!');
+    document.addEventListener('DOMContentLoaded', () => {
+        document.body.innerHTML = `
+            <div style="padding:20px;text-align:center;color:red">
+                <h3>Xato!</h3>
+                <p>Bu ilova faqat Telegram bot ichida ishlaydi.</p>
+                <p>Iltimos, botni Telegram orqali oching.</p>
+            </div>
+        `;
+    });
+} else {
+    const tg = window.Telegram.WebApp;
+    console.log('Telegram WebApp ishga tushmoqda...');
+    tg.ready();
+    tg.expand();
+    tg.setBackgroundColor('#ffffff');
+    tg.setHeaderColor('#ffffff');
 
-document.documentElement.style.background = '#ffffff';
-document.body.style.background = '#ffffff';
-document.body.style.color = tg.themeParams.text_color || '#000000';
+    console.log('Telegram WebApp sozlamalari:', {
+        isExpanded: tg.isExpanded,
+        viewportHeight: tg.viewportHeight,
+        themeParams: tg.themeParams
+    });
 
-const MENU_API = '/bot/api/menu.php';
+    document.documentElement.style.background = '#ffffff';
+    document.body.style.background = '#ffffff';
+    document.body.style.color = tg.themeParams.text_color || '#000000';
+}
+
+const MENU_API = '../bot/api/menu.php'; // Nisbiy yo'l
+// const MENU_API = 'https://olmazor.bigsaver.ru/bot/api/menu.php'; // To'liq yo'l
 const cart = {};
 
 async function loadMenu() {
+    console.log('Menu yuklanmoqda...');
+    document.getElementById('menu').innerHTML = '<p style="padding:20px;text-align:center">Menu yuklanmoqda...</p>';
+    
     try {
+        console.log('API chaqirilmoqda:', MENU_API);
         const res = await fetch(MENU_API);
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const categories = await res.json();
-        if (!categories.length) {
-            document.getElementById('menu').innerHTML = '<p style="padding:20px">Menyu bo\'sh</p>';
+        console.log('Javob holati:', res.status);
+        
+        if (!res.ok) {
+            throw new Error(`Server xatosi: ${res.status} - ${res.statusText}`);
+        }
+        
+        const text = await res.text();
+        console.log('Server javobi:', text);
+        
+        let categories;
+        try {
+            categories = JSON.parse(text);
+        } catch (parseError) {
+            throw new Error('JSON parse xatosi: ' + parseError.message);
+        }
+        
+        console.log('Kategoriyalar yuklandi:', categories);
+        
+        if (!Array.isArray(categories) || categories.length === 0) {
+            document.getElementById('menu').innerHTML = '<p style="padding:20px;text-align:center">Menyu bo\'sh yoki noto\'g\'ri format</p>';
             return;
         }
+        
         renderCategories(categories);
         renderMenu(categories);
+        console.log('Menu muvaffaqiyatli yuklandi');
+        
     } catch (e) {
-        document.getElementById('menu').innerHTML =
-            `<p style="padding:20px;color:red">Xato: ${e.message}</p>`;
+        console.error('Menu yuklashda xato:', e);
+        document.getElementById('menu').innerHTML = `
+            <div style="padding:20px;color:red;text-align:center">
+                <h3>Xato yuz berdi:</h3>
+                <p>${e.message}</p>
+                <p style="font-size:12px;margin-top:10px">API: ${MENU_API}</p>
+                <button onclick="loadMenu()" style="margin-top:10px;padding:8px 16px;background:#2481cc;color:white;border:none;border-radius:4px">Qayta urinish</button>
+            </div>
+        `;
     }
 }
 
