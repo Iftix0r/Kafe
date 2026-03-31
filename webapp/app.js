@@ -10,6 +10,9 @@ class KafeApp {
         this.currentView = 'menu';
         this.MENU_API = 'https://olmazorgo.bigsaver.ru/bot/api/menu.php';
         
+        // Load cart from localStorage
+        this.loadCartFromStorage();
+        
         this.init();
     }
 
@@ -21,6 +24,9 @@ class KafeApp {
         // Initial load
         await this.loadMenu();
         this.renderProfile();
+        
+        // Update cart display after menu is loaded
+        this.updateMainButton();
         
         // Hide loading screen after data is ready
         setTimeout(() => {
@@ -201,6 +207,7 @@ class KafeApp {
         this.cart[id] = { id, name, price, quantity: 1 };
         this.updateItemDisplay(id);
         this.updateMainButton();
+        this.saveCartToStorage();
         this.tg?.HapticFeedback.impactOccurred('light');
     }
 
@@ -215,6 +222,7 @@ class KafeApp {
         this.updateItemDisplay(id);
         this.updateMainButton();
         if (this.currentView === 'cart') this.renderCart();
+        this.saveCartToStorage();
         this.tg?.HapticFeedback.impactOccurred('light');
     }
 
@@ -444,10 +452,44 @@ class KafeApp {
         document.getElementById('success-animation').classList.remove('hidden');
         this.tg?.HapticFeedback.notificationOccurred('success');
         
+        // Clear cart after successful order
+        this.cart = {};
+        this.saveCartToStorage();
+        
         setTimeout(() => {
             this.tg?.sendData(data);
             this.tg?.close();
         }, 2000);
+    }
+
+    // Cart storage methods
+    saveCartToStorage() {
+        try {
+            localStorage.setItem('kafe_cart', JSON.stringify(this.cart));
+        } catch (error) {
+            console.warn('Could not save cart to localStorage:', error);
+        }
+    }
+
+    loadCartFromStorage() {
+        try {
+            const savedCart = localStorage.getItem('kafe_cart');
+            if (savedCart) {
+                this.cart = JSON.parse(savedCart);
+            }
+        } catch (error) {
+            console.warn('Could not load cart from localStorage:', error);
+            this.cart = {};
+        }
+    }
+
+    clearCart() {
+        this.cart = {};
+        this.saveCartToStorage();
+        this.updateMainButton();
+        if (this.currentView === 'cart') this.renderCart();
+        // Update all item displays
+        Object.keys(this.cart).forEach(id => this.updateItemDisplay(id));
     }
 }
 

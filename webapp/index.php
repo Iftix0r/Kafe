@@ -107,11 +107,13 @@ $phpTgId = $_GET['tg_id'] ?? '';
             constructor() {
                 this.tg = window.Telegram?.WebApp;
                 this.cart = {}; this.items = []; this.cur = 'menu';
+                this.loadCartFromStorage();
                 this.init();
             }
             async init() {
                 if(this.tg) { this.tg.ready(); this.tg.expand(); this.sync(); setTimeout(()=>this.sync(), 1000); }
                 try { await this.load(); } catch(e) {}
+                this.sy(); // Update cart display after loading
                 this.hideLS();
             }
             hideLS() { const l=document.getElementById('ls'); if(l) l.style.display='none'; }
@@ -418,8 +420,8 @@ $phpTgId = $_GET['tg_id'] ?? '';
             }
             qH(id,q) { return `<div class="qty-row"><button onclick="app.ch(${id},-1)">−</button><span>${q}</span><button onclick="app.ch(${id},1)">+</button></div>`; }
             fil(id,b) { document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); b.classList.add('active'); this.rI(id); }
-            add(id,n,p) { this.cart[id]={id,n,p,q:1}; this.up(id); this.tg?.HapticFeedback.impactOccurred('light'); }
-            ch(id,d) { if(!this.cart[id])return; this.cart[id].q+=d; if(this.cart[id].q<=0)delete this.cart[id]; this.up(id); if(this.cur==='cart')this.rCrt(); }
+            add(id,n,p) { this.cart[id]={id,n,p,q:1}; this.up(id); this.saveCartToStorage(); this.tg?.HapticFeedback.impactOccurred('light'); }
+            ch(id,d) { if(!this.cart[id])return; this.cart[id].q+=d; if(this.cart[id].q<=0)delete this.cart[id]; this.up(id); if(this.cur==='cart')this.rCrt(); this.saveCartToStorage(); }
             up(id) { const c=document.getElementById(`i-${id}`); if(c) c.innerHTML=this.cart[id]?this.qH(id,this.cart[id].q): `<button class="btn-add" onclick="app.add(${id},'${this.find(id).name}',${this.find(id).price})">Qo'shish</button>`; this.sy(); }
             sy() {
                 const list = Object.values(this.cart); const sum = list.reduce((s,i)=>s+i.p*i.q,0); const n = list.reduce((s,i)=>s+i.q,0);
@@ -458,7 +460,14 @@ $phpTgId = $_GET['tg_id'] ?? '';
             send() {
                 const list=Object.values(this.cart); if(list.length==0)return;
                 const d={items:list, total:list.reduce((s,i)=>s+i.p*i.q,0), note:document.getElementById('note').value};
+                this.cart = {}; this.saveCartToStorage(); // Clear cart after order
                 this.tg?.sendData(JSON.stringify(d)); this.tg?.close();
+            }
+            saveCartToStorage() {
+                try { localStorage.setItem('kafe_cart', JSON.stringify(this.cart)); } catch(e) {}
+            }
+            loadCartFromStorage() {
+                try { const saved = localStorage.getItem('kafe_cart'); if(saved) this.cart = JSON.parse(saved); } catch(e) { this.cart = {}; }
             }
             find(id) { return this.items.flatMap(c=>c.items).find(i=>i.id == id); }
             fmt(n) { return Number(n).toLocaleString('uz-UZ').replace(/,/g,' ')+' so\'m'; }

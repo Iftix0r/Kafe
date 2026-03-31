@@ -285,6 +285,17 @@ body {
     cursor: pointer;
 }
 
+.secondary-btn {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    margin-top: 16px;
+    cursor: pointer;
+}
+
 
 
 /* ===== PROFILE SECTION ===== */
