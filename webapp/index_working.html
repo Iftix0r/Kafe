@@ -516,49 +516,72 @@
                 this.categories = [];
                 this.currentView = 'menu';
                 this.API = 'https://olmazorgo.bigsaver.ru/bot/api/menu.php';
-                
-                this.init();
             }
 
             async init() {
-                this.initTG();
+                console.log('🚀 App init started');
+                // Ensure TG is ready
+                if (this.tg) {
+                    this.tg.ready();
+                    this.tg.expand();
+                    this.tg.enableClosingConfirmation();
+                    
+                    // Give it a tiny moment to populate data
+                    setTimeout(() => this.initTGData(), 100);
+                }
+
                 await this.fetchMenu();
                 this.setupScrollListener();
                 
                 setTimeout(() => {
-                    document.getElementById('loading-screen').style.opacity = '0';
-                    setTimeout(() => document.getElementById('loading-screen').classList.add('hidden'), 500);
+                    const ls = document.getElementById('loading-screen');
+                    if (ls) {
+                        ls.style.opacity = '0';
+                        setTimeout(() => ls.classList.add('hidden'), 500);
+                    }
                 }, 1000);
             }
 
-            initTG() {
-                if (!this.tg) {
-                    console.warn('Telegram WebApp not detected');
-                    return;
-                }
+            initTGData() {
+                if (!this.tg) return;
                 
-                this.tg.ready();
-                this.tg.expand();
-                this.tg.enableClosingConfirmation();
-                
+                console.log('📊 Syncing TG Data...');
                 // Colors sync with Telegram Theme
-                document.documentElement.style.setProperty('--primary', this.tg.themeParams.button_color || '#2481cc');
+                const btnColor = this.tg.themeParams?.button_color;
+                if (btnColor) document.documentElement.style.setProperty('--primary', btnColor);
                 
-                const user = this.tg.initDataUnsafe?.user;
+                // Try multiple sources for user data
+                const user = this.tg.initDataUnsafe?.user || this.parseInitData()?.user;
+                
                 if (user) {
-                    console.log('User found:', user);
+                    console.log('👤 User found:', user);
                     const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
-                    document.getElementById('u-name').textContent = fullName || 'Foydalanuvchi';
-                    document.getElementById('u-id').textContent = user.username ? '@' + user.username : 'ID: ' + user.id;
+                    const nameEl = document.getElementById('u-name');
+                    const idEl = document.getElementById('u-id');
+                    
+                    if (nameEl) nameEl.textContent = fullName || 'Foydalanuvchi';
+                    if (idEl) idEl.textContent = user.username ? '@' + user.username : 'ID: ' + user.id;
                     
                     if (user.photo_url) {
-                        document.getElementById('u-avatar').innerHTML = `<img src="${user.photo_url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='👤'">`;
+                        const avatarEl = document.getElementById('u-avatar');
+                        if (avatarEl) {
+                            avatarEl.innerHTML = `<img src="${user.photo_url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='👤'">`;
+                        }
                     }
                 } else {
-                    console.warn('User data NOT found in initDataUnsafe');
+                    console.warn('❌ User data still missing');
                 }
                 
                 this.tg.MainButton.hide();
+            }
+
+            parseInitData() {
+                if (!this.tg.initData) return null;
+                try {
+                    return Object.fromEntries(new URLSearchParams(this.tg.initData));
+                } catch (e) {
+                    return null;
+                }
             }
 
             async fetchMenu() {
@@ -765,6 +788,7 @@
         }
 
         const app = new PremiumFoodApp();
+        app.init();
     </script>
 </body>
 </html>
