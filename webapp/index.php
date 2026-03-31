@@ -1,5 +1,6 @@
 <?php
-// index.php — Premium Food WebApp (PHP Version 6.4)
+// index.php — Premium Food WebApp (PHP Version 6.6)
+$phpTgId = $_GET['tg_id'] ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="uz">
@@ -17,15 +18,12 @@
         #ls { position:fixed; inset:0; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:10000; transition:0.3s; }
         .pulse { font-size:4rem; animation:pulse 1s infinite alternate; }
         @keyframes pulse { from{transform:scale(1)} to{transform:scale(1.1)} }
-
         .view { display:none; padding:20px; animation:viewIn 0.3s; }
         .view.active { display:block; }
         @keyframes viewIn { from{opacity:0; transform:translateY(10px)} }
-
         .cat-bar { display:flex; gap:10px; overflow-x:auto; padding:0 20px 15px; margin:0 -20px 5px; scrollbar-width:none; }
         .chip { padding:10px 22px; border-radius:30px; background:var(--sec); font-weight:700; border:none; color:#777; white-space:nowrap; }
         .chip.active { background:var(--p); color:#fff; }
-
         .grid { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
         .card { background:#fff; border-radius:var(--r); overflow:hidden; border:1px solid rgba(0,0,0,0.03); display:flex; flex-direction:column; box-shadow:0 4px 15px rgba(0,0,0,0.03); }
         .card img { width:100%; height:130px; object-fit:cover; background:var(--sec); }
@@ -35,34 +33,27 @@
         .btn-add { width:100%; padding:10px; border-radius:12px; background:#fff; color:var(--p); border:1.8px solid var(--p); font-weight:800; }
         .qty-row { display:flex; align-items:center; justify-content:space-between; background:var(--sec); border-radius:12px; padding:4px; }
         .qty-row button { width:32px; height:32px; border:none; background:#fff; border-radius:8px; font-weight:800; color:var(--p); }
-
         .hero { background:linear-gradient(135deg, #2481cc, #1c6ba8); padding:50px 20px; text-align:center; color:#fff; border-radius:0 0 50px 50px; margin:-20px -20px 30px; box-shadow:0 15px 40px rgba(36,129,204,0.25); }
         .avatar { width:95px; height:95px; background:rgba(255,255,255,0.2); border:3px solid #fff; border-radius:50%; margin:0 auto 15px; display:flex; align-items:center; justify-content:center; font-size:3rem; overflow:hidden; }
-
         .nav { position:fixed; bottom:0; left:0; width:100%; height:80px; background:rgba(255,255,255,0.9); backdrop-filter:blur(20px); display:flex; border-top:1px solid rgba(0,0,0,0.05); z-index:1000; }
         .nav-tab { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:0.75rem; font-weight:800; color:#999; position:relative; }
         .nav-tab.active { color:var(--p); }
         .badge { position:absolute; top:12px; right:20%; background:#ef4444; color:#fff; font-size:0.65rem; padding:2px 6px; border-radius:10px; font-weight:800; }
-        
         .float-btn { position:fixed; bottom:95px; left:20px; right:20px; background:var(--p); color:#fff; padding:18px; border-radius:20px; font-weight:800; text-align:center; box-shadow:0 10px 30px rgba(36, 129, 204, 0.4); z-index:900; animation:pop 0.4s; }
         @keyframes pop { from{transform:scale(0.8); opacity:0} }
-
         #err-box { position:fixed; top:10px; left:10px; right:10px; background:#fee2e2; color:#ef4444; padding:15px; border-radius:15px; font-size:0.7rem; z-index:20000; display:none; }
     </style>
 </head>
 <body>
     <div id="ls">
         <div class="pulse">🍽️</div>
-        <div id="ls-text" style="margin-top:20px; font-weight:800; opacity:0.3; font-size:0.9rem">v6.4 FINAL 🚀</div>
+        <div id="ls-text" style="margin-top:20px; font-weight:800; opacity:0.3; font-size:0.9rem">v6.6 SYNC 🚀</div>
     </div>
-
     <div id="err-box" onclick="this.style.display='none'"></div>
-
     <main id="v-menu" class="view active">
         <div id="cats" class="cat-bar"></div>
         <div id="menu-grid" class="grid"></div>
     </main>
-
     <main id="v-cart" class="view">
         <h2 style="margin-bottom:20px;font-weight:800">Savat</h2>
         <div id="cart-list"></div>
@@ -73,20 +64,17 @@
             <button onclick="app.send()" style="width:100%;padding:20px;background:var(--p);color:#fff;border:none;border-radius:22px;margin-top:20px;font-weight:800">Tasdiqlash</button>
         </div>
     </main>
-
     <main id="v-prof" class="view">
         <div class="hero">
             <div class="avatar" id="u-avatar">👤</div>
             <h2 id="u-name">Mehmon</h2>
-            <div id="u-dbg" style="opacity:0.6;font-size:0.8rem;margin-top:8px">v6.4</div>
+            <div id="u-dbg" style="opacity:0.6;font-size:0.8rem;margin-top:8px">v6.6</div>
         </div>
         <div style="padding:20px;background:var(--sec);border-radius:22px;font-weight:700">📞 Tel: <span id="u-phone" style="float:right;color:var(--p)">-</span></div>
         <button onclick="app.sync(true)" style="width:100%;padding:20px;background:var(--p);color:#fff;border:none;border-radius:22px;margin-top:15px;font-weight:800">Yangilash 🔄</button>
-        <div id="dbg-log" style="font-size:0.6rem; color:#aaa; text-align:center; padding:20px">Starting...</div>
+        <div id="dbg-log" style="font-size:0.6rem; color:#aaa; text-align:center; padding:20px; word-break: break-all;">Starting...</div>
     </main>
-
     <div id="float" class="float-btn hidden" onclick="app.tab('cart')">🛒 Savatga o'tish → <span id="float-sum">0</span></div>
-
     <nav class="nav">
         <div class="nav-tab active" id="n-menu" onclick="app.tab('menu')">🍽️<br>Menyu</div>
         <div class="nav-tab" id="n-cart" onclick="app.tab('cart')">🛒<br>Savat<div id="badge" class="badge hidden">0</div></div>
@@ -116,35 +104,77 @@
                 this.items = await r.json(); this.rC(); this.rI();
             }
             async sync(isManual=false) {
-                const log = document.getElementById('dbg-log');
-                if(!this.tg) this.tg = window.Telegram?.WebApp;
-                let u = this.tg?.initDataUnsafe?.user;
-                let src = "Bridge";
+                try {
+                    const dbg = document.getElementById('u-dbg');
+                    const uName = document.getElementById('u-name');
+                    const uPhone = document.getElementById('u-phone');
+                    const log = document.getElementById('dbg-log');
+                    
+                    if (!this.tg) this.tg = window.Telegram?.WebApp;
+                    
+                    let u = this.tg?.initDataUnsafe?.user;
+                    let source = "Bridge";
 
-                if(!u && this.tg?.initData) { try { u = JSON.parse(new URLSearchParams(this.tg.initData).get('user')); src="Raw"; } catch(e){ src="DataError"; } }
-                if(!u) { const p = new URLSearchParams(window.location.search); const tid = p.get('tg_id'); if(tid){ u={id:tid, first_name:'User'}; src="URL"; } else { src="NoUserFound"; } }
+                    let rawDump = "RAW: " + JSON.stringify(this.tg?.initDataUnsafe || {});
 
-                if(log) log.textContent = `Sync: ${src} | ID: ${u?.id || 'Aniqlanmadi'}`;
+                    if (!u && this.tg?.initData) {
+                        try {
+                            const p = new URLSearchParams(this.tg.initData);
+                            const s = p.get('user');
+                            if (s) { u = JSON.parse(s); source = "Bot-Raw"; }
+                        } catch(e) {}
+                    }
+                    
+                    const phpTgId = "<?= htmlspecialchars($phpTgId) ?>";
+                    if (!u && phpTgId) {
+                        u = { id: phpTgId, first_name: 'Foydalanuvchi' }; 
+                        source = "PHP-ID";
+                    }
 
-                if(u) {
-                    const un = document.getElementById('u-name'); if(un) un.textContent = [u.first_name, u.last_name].filter(Boolean).join(' ') || 'User';
-                    const dbg = document.getElementById('u-dbg'); if(dbg) dbg.textContent = `ID: ${u.id} | v6.5 (${src})`;
-                    if(u.photo_url) document.getElementById('u-avatar').innerHTML = `<img src="${u.photo_url}" style="width:100%;height:100%;object-fit:cover">`;
+                    if (!u) {
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const tid = urlParams.get('tg_id');
+                        if (tid) { u = { id: tid, first_name: 'Foydalanuvchi' }; source = "URL-ID"; }
+                    }
+
+                    if (!u) {
+                        if (log) log.innerHTML = `Aniqlanmadingiz.<br><br><small style="color:red">${rawDump}<br>PHP_ID: '${phpTgId}'</small>`;
+                        if (dbg) dbg.textContent = "v6.6 - NotFound";
+                        return;
+                    }
+
+                    if (log) log.textContent = `Sinxronizatsiya (${source}: ${u.id})...`;
+                    if (uName) uName.textContent = [u.first_name, u.last_name].filter(Boolean).join(' ') || 'Foydalanuvchi';
+                    if (dbg) dbg.textContent = `ID: ${u.id} | v6.6`;
 
                     try {
-                        fetch(`../bot/api/register.php?id=${u.id}&first=${encodeURIComponent(u.first_name||'')}&last=${encodeURIComponent(u.last_name||'')}&user=${encodeURIComponent(u.username||'')}`).catch(()=>{});
-                        const r = await fetch(`../bot/api/user.php?id=${u.id}`);
-                        if(r.ok) {
-                            const d = await r.json();
-                            if(d.ok && d.user) {
-                                const ph = document.getElementById('u-phone'); if(ph) ph.textContent = d.user.phone_number || 'Raqam topilmadi';
-                                if(d.user.first_name && un) un.textContent = [d.user.first_name, d.user.last_name].filter(Boolean).join(' ');
-                            }
+                        const regUrl = `../bot/api/register.php?id=${u.id}&first=${encodeURIComponent(u.first_name||'')}&last=${encodeURIComponent(u.last_name||'')}&user=${encodeURIComponent(u.username||'')}`;
+                        fetch(regUrl).catch(e => {});
+                    } catch(e){}
+
+                    try {
+                        const paths = ['../bot/api/user.php?id=', '/bot/api/user.php?id=', '/Kafe/bot/api/user.php?id='];
+                        let resData = null;
+                        for (let p of paths) {
+                            try {
+                                const r = await fetch(p + u.id);
+                                if (r.ok) { let j = await r.json(); if(j.ok){ resData = j; break; } }
+                            } catch(e){}
                         }
-                    } catch(e){ if(log) log.textContent += " | API Error"; }
-                } else {
-                    if(log) log.textContent += " | Foydalanuvchi ma'lumotlari yo'q";
-                }
+                        
+                        if (resData && resData.user) {
+                            if (uPhone) uPhone.textContent = resData.user.phone_number || 'Raqam yo\'q';
+                            if (resData.user.first_name && uName) uName.textContent = [resData.user.first_name, resData.user.last_name].filter(Boolean).join(' ');
+                            if (log) log.innerHTML = `Muvaffaqiyatli ulangan! ✅<br><small style="opacity:0.5">${rawDump}</small>`;
+                        } else {
+                            if (uPhone) uPhone.textContent = "Bazada yo'q";
+                            if (log) log.textContent = "Siz bazada yo'qsiz. Telefoningizni yuboring.";
+                        }
+                    } catch(err) {
+                        if (log) log.innerHTML = `API Xato.<br><small style="opacity:0.5">${rawDump}</small>`;
+                        if (uPhone) uPhone.textContent = "Net Error";
+                    }
+                } catch (err) { const log = document.getElementById('dbg-log'); if(log) log.textContent = "JS Error: " + err.message; }
             }
             rC() {
                 const c = document.getElementById('cats'); if(!c) return;
@@ -201,7 +231,6 @@
         }
         
         window.onload = () => { window.app = new App(); };
-        // Ultimate Failsafe
         setTimeout(() => { const l=document.getElementById('ls'); if(l && l.style.display!=='none') l.style.display='none'; }, 4000);
     </script>
 </body>
