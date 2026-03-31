@@ -4,30 +4,184 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menyu</title>
-    <link rel="stylesheet" href="style_simple.css">
+    <link rel="stylesheet" href="style_full.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <!-- Loading -->
+    <!-- Loading Screen -->
     <div id="loading" class="loading">
         <div class="spinner"></div>
         <p>Menyu yuklanmoqda...</p>
     </div>
 
-    <!-- Main App -->
-    <div id="app" class="app hidden">
+    <!-- Screen 1: Menu -->
+    <div id="menu-screen" class="screen hidden">
+        <!-- Header -->
+        <div class="header">
+            <h1>Menyu</h1>
+            <div class="cart-icon" id="cart-icon" onclick="showCart()">
+                🛒
+                <span class="cart-badge" id="cart-badge">0</span>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="search-container">
+            <input type="text" id="search" placeholder="🔍 Qidirish..." oninput="searchItems()">
+        </div>
+
         <!-- Categories -->
-        <div class="categories" id="categories"></div>
+        <div class="categories" id="categories">
+            <button class="category-btn active" onclick="filterCategory('all')">Barchasi</button>
+        </div>
 
-        <!-- Menu -->
-        <div class="menu" id="menu"></div>
+        <!-- Menu Items -->
+        <div class="menu-items" id="menu-items"></div>
 
-        <!-- Comment -->
-        <div class="comment-box">
-            <textarea id="comment" placeholder="Qo'shimcha so'rov (ixtiyoriy)"></textarea>
+        <!-- Cart Summary (Bottom) -->
+        <div class="cart-summary hidden" id="cart-summary">
+            <div class="cart-info">
+                <span id="cart-count">0 ta mahsulot</span>
+                <span id="cart-total">0 so'm</span>
+            </div>
+            <button class="cart-btn" onclick="showCart()">Savatga o'tish</button>
         </div>
     </div>
 
-    <script src="app_simple.js"></script>
+    <!-- Screen 2: Cart -->
+    <div id="cart-screen" class="screen hidden">
+        <!-- Header -->
+        <div class="header">
+            <button class="back-btn" onclick="showMenu()">← Orqaga</button>
+            <h1>Savat</h1>
+            <div></div>
+        </div>
+
+        <!-- Cart Items -->
+        <div class="cart-items" id="cart-items"></div>
+
+        <!-- Comment Section -->
+        <div class="comment-section">
+            <label for="order-comment">Izoh (ixtiyoriy):</label>
+            <textarea id="order-comment" placeholder="Masalan: Kamroq tuz, ko'proq achchiq..."></textarea>
+        </div>
+
+        <!-- Address Section -->
+        <div class="address-section">
+            <label for="address">Manzil:</label>
+            <div class="address-input">
+                <input type="text" id="address" placeholder="Manzilingizni kiriting">
+                <button class="location-btn" onclick="getLocation()">📍</button>
+            </div>
+        </div>
+
+        <!-- Payment Method -->
+        <div class="payment-section">
+            <label>To'lov usuli:</label>
+            <div class="payment-methods">
+                <label class="payment-option">
+                    <input type="radio" name="payment" value="cash" checked>
+                    <span>💵 Naqd</span>
+                </label>
+                <label class="payment-option">
+                    <input type="radio" name="payment" value="payme">
+                    <span>💳 Payme</span>
+                </label>
+                <label class="payment-option">
+                    <input type="radio" name="payment" value="click">
+                    <span>💳 Click</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="order-summary">
+            <div class="summary-row">
+                <span>Mahsulotlar:</span>
+                <span id="summary-subtotal">0 so'm</span>
+            </div>
+            <div class="summary-row">
+                <span>Yetkazib berish:</span>
+                <span>Bepul</span>
+            </div>
+            <div class="summary-row total">
+                <span>Jami:</span>
+                <span id="summary-total">0 so'm</span>
+            </div>
+        </div>
+
+        <!-- Order Button -->
+        <div class="order-section">
+            <button class="order-btn" id="order-btn" onclick="submitOrder()">
+                Buyurtma berish
+            </button>
+        </div>
+    </div>
+
+    <!-- Screen 3: Confirmation -->
+    <div id="confirmation-screen" class="screen hidden">
+        <!-- Header -->
+        <div class="header">
+            <div></div>
+            <h1>Buyurtma</h1>
+            <div></div>
+        </div>
+
+        <!-- Success Icon -->
+        <div class="success-icon">✅</div>
+
+        <!-- Order Info -->
+        <div class="order-info">
+            <h2>Buyurtma qabul qilindi!</h2>
+            <div class="order-details">
+                <div class="detail-row">
+                    <span>Buyurtma raqami:</span>
+                    <span id="order-number">#12345</span>
+                </div>
+                <div class="detail-row">
+                    <span>Sana:</span>
+                    <span id="order-date">12.12.2024, 14:30</span>
+                </div>
+                <div class="detail-row">
+                    <span>Jami summa:</span>
+                    <span id="order-amount">0 so'm</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Progress -->
+        <div class="status-progress">
+            <div class="status-step active">
+                <div class="step-icon">📋</div>
+                <div class="step-text">Qabul qilindi</div>
+            </div>
+            <div class="status-step">
+                <div class="step-icon">👨‍🍳</div>
+                <div class="step-text">Tayyorlanmoqda</div>
+            </div>
+            <div class="status-step">
+                <div class="step-icon">🚗</div>
+                <div class="step-text">Yetkazish</div>
+            </div>
+            <div class="status-step">
+                <div class="step-icon">✅</div>
+                <div class="step-text">Yetdi</div>
+            </div>
+        </div>
+
+        <!-- Estimated Time -->
+        <div class="estimated-time">
+            <h3>Taxminiy vaqt: 25-30 daqiqa</h3>
+            <p>Buyurtmangiz tayyor bo'lganda sizga xabar beramiz</p>
+        </div>
+
+        <!-- Actions -->
+        <div class="confirmation-actions">
+            <button class="home-btn" onclick="goHome()">Bosh sahifaga qaytish</button>
+            <button class="track-btn" onclick="trackOrder()">Buyurtmani kuzatish</button>
+        </div>
+    </div>
+
+    <script src="app_full.js"></script>
 </body>
 </html>
