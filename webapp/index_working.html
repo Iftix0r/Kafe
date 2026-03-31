@@ -42,6 +42,7 @@
             color: var(--text-main);
             overflow-x: hidden;
             padding-bottom: calc(var(--nav-height) + 20px);
+            padding-top: 20px; /* Space for top of screen since header is gone */
             -webkit-user-select: none;
             user-select: none;
         }
@@ -70,49 +71,6 @@
             50% { transform: scale(1.15); opacity: 0.8; }
         }
 
-        /* ===== GLASSMORPHISM HEADER ===== */
-        .header {
-            position: sticky;
-            top: 0;
-            z-index: 500;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            padding: 15px 20px;
-        }
-
-        .header-content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .header-title {
-            font-size: 1.4rem;
-            font-weight: 700;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .header-badge {
-            background: var(--danger);
-            color: white;
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 2px 8px;
-            border-radius: 10px;
-            min-width: 24px;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
-            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
         /* ===== TABS & VIEWS ===== */
         .view {
             display: none;
@@ -129,7 +87,7 @@
 
         /* ===== CATEGORIES ===== */
         .categories-scroll {
-            margin: 15px -20px;
+            margin: 0 -20px 15px;
             padding: 5px 20px 15px;
             overflow-x: auto;
             scrollbar-width: none;
@@ -166,6 +124,7 @@
             padding-bottom: 30px;
         }
 
+        /* Updated Card Design */
         .item-card {
             background: var(--white);
             border-radius: var(--radius);
@@ -176,7 +135,6 @@
             border: 1px solid rgba(0,0,0,0.03);
             transition: transform 0.3s;
         }
-
         .item-card:active { transform: scale(0.97); }
 
         .item-img-container {
@@ -185,103 +143,27 @@
             position: relative;
             background: var(--secondary);
         }
+        .item-img-container img { width: 100%; height: 100%; object-fit: cover; }
+        .no-img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 3rem; opacity: 0.4; }
 
-        .item-img-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .no-img-placeholder {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            opacity: 0.4;
-        }
-
-        .item-body {
-            padding: 12px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
+        .item-body { padding: 12px; flex-grow: 1; display: flex; flex-direction: column; gap: 6px; }
         .item-name { font-weight: 700; font-size: 1rem; color: var(--text-main); }
         .item-desc { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.3; }
         .item-price { font-weight: 800; color: var(--primary); font-size: 0.95rem; margin-top: 4px; }
 
         .item-footer { padding: 8px 12px 12px; }
-
         .btn-add {
-            width: 100%;
-            padding: 10px;
-            border-radius: 15px;
-            background: var(--white);
-            color: var(--primary);
-            border: 1.5px solid var(--primary);
-            font-weight: 700;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.2s;
+            width: 100%; padding: 10px; border-radius: 15px;
+            background: var(--white); color: var(--primary); border: 1.5px solid var(--primary);
+            font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
         }
-
         .btn-add:active { background: var(--primary); color: var(--white); }
 
-        .qty-box {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--secondary);
-            border-radius: 15px;
-            padding: 5px;
-        }
-
-        .qty-btn {
-            width: 32px; height: 32px;
-            border-radius: 12px;
-            border: none;
-            background: var(--white);
-            color: var(--text-main);
-            font-size: 1.2rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-
-        .qty-val { font-weight: 700; font-size: 1rem; }
+        .qty-box { display: flex; align-items: center; justify-content: space-between; background: var(--secondary); border-radius: 15px; padding: 5px; }
+        .qty-btn { width: 32px; height: 32px; border-radius: 12px; border: none; background: var(--white); color: var(--text-main); font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 
         /* ===== CART VIEW ===== */
-        .cart-list { display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
-        .cart-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background: var(--white);
-            padding: 12px;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-soft);
-        }
-        .cart-item-img { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; background: var(--secondary); }
-        .cart-item-info { flex: 1; }
-        .cart-item-name { font-weight: 700; font-size: 1rem; }
-        .cart-item-price { color: var(--text-secondary); font-size: 0.85rem; }
-
-        .summary-card {
-            margin-top: 25px;
-            background: var(--secondary);
-            padding: 20px;
-            border-radius: var(--radius);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .summary-row { display: flex; justify-content: space-between; font-weight: 500; }
+        .summary-card { margin-top: 25px; background: var(--secondary); padding: 20px; border-radius: var(--radius); display: flex; flex-direction: column; gap: 10px; }
         .summary-total { margin-top: 10px; padding-top: 10px; border-top: 1.5px dashed #ccc; font-weight: 800; font-size: 1.2rem; color: var(--primary); }
 
         /* ===== PROFILE VIEW ===== */
@@ -295,168 +177,99 @@
             box-shadow: var(--shadow-bold);
         }
         .profile-avatar { width: 90px; height: 90px; background: rgba(255,255,255,0.2); border: 3px solid var(--white); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 3rem; overflow: hidden; }
-        .profile-name { font-size: 1.5rem; font-weight: 800; }
-        .profile-id { opacity: 0.7; font-size: 0.9rem; margin-top: 5px; }
 
-        .profile-menu { display: flex; flex-direction: column; gap: 12px; padding-bottom: 20px; }
-        .profile-menu-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 18px;
-            background: var(--secondary);
-            border-radius: 18px;
-            font-weight: 600;
-        }
-        .menu-icon { font-size: 1.4rem; width: 35px; height: 35px; background: var(--white); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-
-        /* ===== FLOATING CHECKOUT BUTTON ===== */
+        /* ===== FLOATING CHECKOUT ===== */
         .floating-checkout {
             position: fixed;
             bottom: calc(var(--nav-height) + 20px);
-            left: 20px;
-            right: 20px;
-            z-index: 800;
-            background: var(--primary-gradient);
-            color: var(--white);
-            border: none;
-            padding: 18px;
-            border-radius: 20px;
-            font-weight: 800;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            box-shadow: var(--shadow-bold);
-            animation: pulse-shadow 2s infinite ease-in-out, pop-up 0.5s ease-out;
+            left: 20px; right: 20px;
+            z-index: 800; background: var(--primary-gradient); color: var(--white);
+            border: none; padding: 18px; border-radius: 20px; font-weight: 800; font-size: 1.1rem;
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            box-shadow: var(--shadow-bold); animation: pulse-shadow 2s infinite ease-in-out, pop-up 0.5s ease-out;
         }
 
         @keyframes pulse-shadow {
-            0% { box-shadow: 0 10px 40px rgba(36, 129, 204, 0.4); }
+            0%, 100% { box-shadow: 0 10px 40px rgba(36, 129, 204, 0.4); }
             50% { box-shadow: 0 10px 60px rgba(36, 129, 204, 0.6); }
-            100% { box-shadow: 0 10px 40px rgba(36, 129, 204, 0.4); }
         }
-
-        @keyframes pop-up {
-            from { transform: translateY(100px) scale(0.8); opacity: 0; }
-            to { transform: translateY(0) scale(1); opacity: 1; }
-        }
+        @keyframes pop-up { from { transform: translateY(100px) scale(0.8); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
 
         /* ===== BOTTOM NAV ===== */
         .bottom-nav {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            height: var(--nav-height);
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
+            position: fixed; bottom: 0; left: 0; right: 0;
+            height: var(--nav-height); background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
             border-top: 1px solid rgba(0,0,0,0.05);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            z-index: 1000;
+            display: flex; justify-content: space-around; align-items: center; z-index: 1000;
         }
-
-        .nav-item {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            color: var(--text-secondary);
-            font-size: 0.75rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; cursor: pointer; position: relative; }
         .nav-item.active { color: var(--primary); }
         .nav-icon { font-size: 1.5rem; transition: transform 0.3s; }
         .nav-item.active .nav-icon { transform: translateY(-5px) scale(1.1); }
 
-        /* ===== SUCCESS OVERLAY ===== */
+        /* Nav Badge */
+        .nav-badge {
+            position: absolute; top: -5px; right: 15%;
+            background: var(--danger); color: white;
+            font-size: 0.65rem; font-weight: 800;
+            padding: 2px 6px; border-radius: 10px;
+            min-width: 18px; text-align: center;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Progress Bar */
+        .progress-container { position: fixed; top: 0; left: 0; width: 100%; height: 3px; background: transparent; z-index: 2000; }
+        .progress-bar { height: 3px; background: var(--primary); width: 0%; transition: width 0.1s; }
+
+        /* Success Overlay */
         .success-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: var(--primary-gradient);
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            color: white;
-            text-align: center;
-            padding: 40px;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--primary-gradient); z-index: 3000;
+            display: flex; align-items: center; justify-content: center; flex-direction: column;
+            color: white; text-align: center; padding: 40px;
         }
-
-        .success-circle { width: 120px; height: 120px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 5rem; margin-bottom: 20px; animation: bounceIn 0.8s ease; }
-
-        @keyframes bounceIn {
-            0% { transform: scale(0); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-
-        /* ===== COMMENT BOX ===== */
-        .comment-box { margin: 20px 0; position: relative; }
-        #comment-area { width: 100%; border: none; background: var(--secondary); border-radius: 15px; padding: 15px 15px 15px 45px; font-size: 0.9rem; resize: none; min-height: 80px; }
-        .comment-icon-float { position: absolute; left: 15px; top: 15px; font-size: 1.2rem; }
-
-        /* Scroll Progress */
-        .progress-container { position: fixed; top: 0; left: 0; width: 100%; height: 4px; background: transparent; z-index: 1000; }
-        .progress-bar { height: 4px; background: var(--primary); width: 0%; transition: width 0.1s; }
     </style>
 </head>
 <body>
     <!-- Loading Screen -->
-    <div id="loading-screen" class="loading-screen">
-        <div class="loading-logo">🍽️</div>
-    </div>
+    <div id="loading-screen" class="loading-screen"><div class="loading-logo">🍽️</div></div>
 
-    <main id="view-menu" class="view active">
-        <div class="categories-scroll" id="category-chips">
-            <!-- Progress Bar -->
+    <!-- Progress Bar -->
     <div class="progress-container"><div id="progress-bar" class="progress-bar"></div></div>
 
     <!-- Success Overlay -->
     <div id="success-overlay" class="success-overlay hidden">
-        <div class="success-circle">✅</div>
-        <h1 style="font-size: 2rem; margin-bottom: 10px;">Muvaffaqiyatli!</h1>
-        <p style="opacity: 0.8; font-size: 1.1rem;">Buyurtmangiz qabul qilindi. Tez orada bog'lanamiz.</p>
+        <div style="width:100px; height:100px; background:rgba(255,255,255,0.2); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:4rem; margin-bottom:20px;">✅</div>
+        <h1 style="font-size: 1.8rem;">Muvaffaqiyatli!</h1>
+        <p style="opacity: 0.8; margin-top:10px;">Buyurtmangiz qabul qilindi.</p>
     </div>
 
-    <!-- App Container (Header removed) -->
-        </div>
-        <div class="items-grid" id="menu-grid">
-            <!-- Items injected here -->
-        </div>
+    <!-- View: Menu -->
+    <main id="view-menu" class="view active">
+        <div class="categories-scroll" id="category-chips"></div>
+        <div class="items-grid" id="menu-grid"></div>
     </main>
 
     <!-- View: Cart -->
     <main id="view-cart" class="view">
-        <h2 style="margin: 20px 0 15px; font-weight: 800; font-size: 1.8rem;">Savat</h2>
-        <div id="cart-items-list" class="cart-list">
-            <!-- Cart items injected here -->
-        </div>
+        <h2 style="margin-bottom: 20px; font-weight: 800; font-size: 1.8rem;">Savat</h2>
+        <div id="cart-items-list" style="display:flex; flex-direction:column; gap:15px;"></div>
         
         <div id="cart-empty" class="hidden" style="text-align: center; padding: 60px 0;">
-            <div style="font-size: 5rem; margin-bottom: 15px;">🛒</div>
-            <h3 style="font-weight: 800; opacity: 0.5;">Savatingiz bo'sh</h3>
-            <button onclick="app.switchTab('menu')" class="btn-add" style="width: auto; padding: 12px 30px; margin-top: 15px; background: var(--primary); color: white;">Mahsulot qo'shish</button>
+            <div style="font-size: 4rem; margin-bottom: 15px;">🛒</div>
+            <h3 style="opacity: 0.6;">Savatingiz bo'sh</h3>
         </div>
 
         <div id="cart-summary" class="hidden">
-            <div class="comment-box">
-                <span class="comment-icon-float">💬</span>
-                <textarea id="comment-area" placeholder="Buyurtma uchun izoh..." maxlength="200"></textarea>
+            <div style="margin: 20px 0; position: relative;">
+                <textarea id="comment-area" placeholder="Buyurtma uchun izoh..." style="width:100%; border:none; background:var(--secondary); border-radius:15px; padding:15px; font-size:0.9rem; resize:none; min-height:80px;"></textarea>
             </div>
             <div class="summary-card">
-                <div class="summary-row"><span>Mahsulotlar:</span> <span id="summary-count">0 ta</span></div>
-                <div class="summary-row"><span>Yetkazib berish:</span> <span>Bepul</span></div>
-                <div class="summary-row summary-total"><span>Jami:</span> <span id="summary-total">0 so'm</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>Mahsulotlar:</span> <span id="summary-count">0 ta</span></div>
+                <div style="display:flex; justify-content:space-between; margin-top:10px; font-weight:800; font-size:1.2rem; color:var(--primary); border-top:1.5px dashed #ccc; padding-top:10px;"><span>Jami:</span> <span id="summary-total">0 so'm</span></div>
             </div>
-            <button class="btn-add" onclick="app.submitOrder()" style="height: 60px; background: var(--primary); color: white; margin-top: 20px; font-size: 1.1rem;">Buyurtmani tasdiqlash</button>
+            <button class="btn-add" onclick="app.submitOrder()" style="height: 60px; background: var(--primary); color: white; margin-top: 20px; font-size: 1.1rem;">Tasdiqlash</button>
         </div>
     </main>
 
@@ -464,19 +277,16 @@
     <main id="view-profile" class="view">
         <div class="profile-hero">
             <div class="profile-avatar" id="u-avatar">👤</div>
-            <div class="profile-name" id="u-name">Mehmon</div>
-            <div class="profile-id" id="u-id">@username</div>
+            <div id="u-name" style="font-size: 1.5rem; font-weight: 800;">Mehmon</div>
+            <div id="u-id" style="opacity: 0.7; font-size: 0.9rem;">@username</div>
         </div>
-
-        <div class="profile-menu">
-            <div class="profile-menu-item"><div class="menu-icon">📦</div> Buyurtmalar tarixi</div>
-            <div class="profile-menu-item"><div class="menu-icon">💳</div> To'lov usullari</div>
-            <div class="profile-menu-item"><div class="menu-icon">⚙️</div> Sozlamalar</div>
-            <div class="profile-menu-item" style="color: var(--danger);"><div class="menu-icon" style="color: var(--danger);">📞</div> Yordam markazi</div>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+            <div style="display:flex; align-items:center; gap:15px; padding:18px; background:var(--secondary); border-radius:18px; font-weight:600;">📦 Buyurtmalar tarixi</div>
+            <div style="display:flex; align-items:center; gap:15px; padding:18px; background:var(--secondary); border-radius:18px; font-weight:600;">⚙️ Sozlamalar</div>
         </div>
     </main>
 
-    <!-- Floating Checkout Trigger -->
+    <!-- Floating Order Button (Only for Menu View) -->
     <button id="float-order-btn" class="floating-checkout hidden" onclick="app.switchTab('cart')">
         🛒 Savatga o'tish — <span id="float-total">0</span> so'm
     </button>
@@ -490,6 +300,7 @@
         <div class="nav-item" onclick="app.switchTab('cart')" id="nav-cart">
             <div class="nav-icon">🛒</div>
             <div>Savat</div>
+            <div id="cart-nav-badge" class="nav-badge hidden">0</div>
         </div>
         <div class="nav-item" onclick="app.switchTab('profile')" id="nav-profile">
             <div class="nav-icon">👤</div>
@@ -508,68 +319,36 @@
             }
 
             async init() {
-                console.log('🚀 App init started');
-                // Ensure TG is ready
                 if (this.tg) {
                     this.tg.ready();
                     this.tg.expand();
                     this.tg.enableClosingConfirmation();
-                    
-                    // Give it a tiny moment to populate data
                     setTimeout(() => this.initTGData(), 100);
                 }
-
                 await this.fetchMenu();
                 this.setupScrollListener();
-                
                 setTimeout(() => {
                     const ls = document.getElementById('loading-screen');
-                    if (ls) {
-                        ls.style.opacity = '0';
-                        setTimeout(() => ls.classList.add('hidden'), 500);
-                    }
+                    if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.classList.add('hidden'), 500); }
                 }, 1000);
             }
 
             initTGData() {
                 if (!this.tg) return;
-                
-                // Try multiple sources for user data
                 let user = this.tg.initDataUnsafe?.user;
-                
-                // Fallback: Parse from raw initData string if initDataUnsafe is empty
                 if (!user && this.tg.initData) {
                     try {
                         const params = new URLSearchParams(this.tg.initData);
                         const userStr = params.get('user');
-                        if (userStr) {
-                            user = JSON.parse(userStr);
-                        }
-                    } catch (e) {
-                        console.error('Failed to parse initData user:', e);
-                    }
+                        if (userStr) user = JSON.parse(userStr);
+                    } catch (e) {}
                 }
-                
                 if (user) {
                     const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
-                    const nameEl = document.getElementById('u-name');
-                    const idEl = document.getElementById('u-id');
-                    const avatarEl = document.getElementById('u-avatar');
-                    
-                    if (nameEl) nameEl.textContent = fullName || 'Foydalanuvchi';
-                    if (idEl) idEl.textContent = user.username ? '@' + user.username : 'ID: ' + user.id;
-                    
-                    if (user.photo_url && avatarEl) {
-                        avatarEl.innerHTML = `<img src="${user.photo_url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='👤'">`;
-                    }
-                } else {
-                    // Final fallback to avoid "Mehmon" if we are clearly in Telegram
-                    const nameEl = document.getElementById('u-name');
-                    if (nameEl && nameEl.textContent === 'Mehmon') {
-                        nameEl.textContent = 'Foydalanuvchi';
-                    }
+                    document.getElementById('u-name').textContent = fullName || 'Foydalanuvchi';
+                    document.getElementById('u-id').textContent = user.username ? '@' + user.username : 'ID: ' + user.id;
+                    if (user.photo_url) document.getElementById('u-avatar').innerHTML = `<img src="${user.photo_url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='👤'">`;
                 }
-                
                 this.tg.MainButton.hide();
             }
 
@@ -579,9 +358,7 @@
                     this.categories = await res.json();
                     this.renderCategories();
                     this.renderItems();
-                } catch (e) {
-                    console.error('API Error:', e);
-                }
+                } catch (e) {}
             }
 
             renderCategories() {
@@ -593,76 +370,40 @@
             }
 
             renderItems(catId = 'all') {
-                const grid = document.getElementById('menu-grid');
-                grid.innerHTML = '';
-                
-                let items = [];
-                if (catId === 'all') {
-                    items = this.categories.flatMap(c => c.items);
-                } else {
-                    items = this.categories.find(c => c.id == catId)?.items || [];
-                }
-
+                const grid = document.getElementById('menu-grid'); grid.innerHTML = '';
+                let items = (catId === 'all') ? this.categories.flatMap(c => c.items) : (this.categories.find(c => c.id == catId)?.items || []);
                 items.forEach((item, idx) => {
-                    const card = document.createElement('div');
-                    card.className = 'item-card';
-                    card.style.animationDelay = `${idx * 0.05}s`;
-                    
+                    const card = document.createElement('div'); card.className = 'item-card';
                     const qty = this.cart[item.id]?.quantity || 0;
-                    
                     card.innerHTML = `
-                        <div class="item-img-container">
-                            ${item.image_url ? `<img src="${item.image_url}" alt="${item.name}">` : `<div class="no-img-placeholder">🍽️</div>`}
-                        </div>
-                        <div class="item-body">
-                            <div class="item-name">${item.name}</div>
-                            <div class="item-desc">${item.description || "Mazali taom"}</div>
-                            <div class="item-price">${this.format(item.price)} so'm</div>
-                        </div>
-                        <div class="item-footer" id="ctrl-${item.id}">
-                            ${qty > 0 ? this.qtyHtml(item.id, qty) : `<button class="btn-add" onclick="app.add(${item.id}, '${item.name}', ${item.price})">Qo'shish</button>`}
-                        </div>
+                        <div class="item-img-container">${item.image_url ? `<img src="${item.image_url}">` : `<div class="no-img-placeholder">🍽️</div>`}</div>
+                        <div class="item-body"><div class="item-name">${item.name}</div><div class="item-desc">${item.description || "Mazali taom"}</div><div class="item-price">${this.format(item.price)} so'm</div></div>
+                        <div class="item-footer" id="ctrl-${item.id}">${qty > 0 ? this.qtyHtml(item.id, qty) : `<button class="btn-add" onclick="app.add(${item.id}, '${item.name}', ${item.price})">Qo'shish</button>`}</div>
                     `;
                     grid.appendChild(card);
                 });
             }
 
-            qtyHtml(id, q) {
-                return `<div class="qty-box">
-                    <button class="qty-btn" onclick="app.change(${id}, -1)">−</button>
-                    <span class="qty-val">${q}</span>
-                    <button class="qty-btn" onclick="app.change(${id}, 1)">+</button>
-                </div>`;
-            }
+            qtyHtml(id, q) { return `<div class="qty-box"><button class="qty-btn" onclick="app.change(${id}, -1)">−</button><span class="qty-val">${q}</span><button class="qty-btn" onclick="app.change(${id}, 1)">+</button></div>`; }
 
             filterCat(id, btn) {
                 document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.renderItems(id);
-                this.tg?.HapticFeedback.selectionChanged();
+                btn.classList.add('active'); this.renderItems(id); this.tg?.HapticFeedback.selectionChanged();
             }
 
-            add(id, name, price) {
-                this.cart[id] = { id, name, price, quantity: 1 };
-                this.updateUI(id);
-                this.tg?.HapticFeedback.impactOccurred('light');
-            }
-
+            add(id, name, price) { this.cart[id] = { id, name, price, quantity: 1 }; this.updateUI(id); this.tg?.HapticFeedback.impactOccurred('light'); }
+            
             change(id, delta) {
-                if (!this.cart[id]) return;
-                this.cart[id].quantity += delta;
+                if (!this.cart[id]) return; this.cart[id].quantity += delta;
                 if (this.cart[id].quantity <= 0) delete this.cart[id];
-                this.updateUI(id);
-                if (this.currentView === 'cart') this.renderCart();
+                this.updateUI(id); if (this.currentView === 'cart') this.renderCart();
                 this.tg?.HapticFeedback.impactOccurred('light');
             }
 
             updateUI(id) {
                 const ctrl = document.getElementById(`ctrl-${id}`);
                 const q = this.cart[id]?.quantity || 0;
-                if (ctrl) {
-                    ctrl.innerHTML = q > 0 ? this.qtyHtml(id, q) : `<button class="btn-add" onclick="app.add(${id}, '${this.find(id).name}', ${this.find(id).price})">Qo'shish</button>`;
-                }
+                if (ctrl) ctrl.innerHTML = q > 0 ? this.qtyHtml(id, q) : `<button class="btn-add" onclick="app.add(${id}, '${this.find(id).name}', ${this.find(id).price})">Qo'shish</button>`;
                 this.syncSummary();
             }
 
@@ -671,35 +412,25 @@
                 const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
                 const count = items.reduce((s, i) => s + i.quantity, 0);
 
-                const badge = document.getElementById('cart-badge');
-                badge.textContent = count;
-                badge.classList.toggle('hidden', count === 0);
+                const badge = document.getElementById('cart-nav-badge');
+                if (badge) { badge.textContent = count; badge.classList.toggle('hidden', count === 0); }
 
                 const floatBtn = document.getElementById('float-order-btn');
-                const floatTotal = document.getElementById('float-total');
-                if (count > 0 && this.currentView === 'menu') {
-                    floatBtn.classList.remove('hidden');
-                    floatTotal.textContent = this.format(total);
-                } else {
-                    floatBtn.classList.add('hidden');
+                if (floatBtn) {
+                    if (count > 0 && this.currentView === 'menu') {
+                        floatBtn.classList.remove('hidden');
+                        document.getElementById('float-total').textContent = this.format(total);
+                    } else floatBtn.classList.add('hidden');
                 }
             }
 
             switchTab(tab) {
                 if (this.currentView === tab) return;
                 this.currentView = tab;
-
                 document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
                 document.getElementById(`view-${tab}`).classList.add('active');
-
                 document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
                 document.getElementById(`nav-${tab}`).classList.add('active');
-
-                const titles = { menu: 'Menyu', cart: 'Savat', profile: 'Profil' };
-                const emojis = { menu: '🍽️', cart: '🛒', profile: '👤' };
-                document.getElementById('page-title').textContent = titles[tab];
-                document.getElementById('page-emoji').textContent = emojis[tab];
-
                 if (tab === 'cart') this.renderCart();
                 this.syncSummary();
                 this.tg?.HapticFeedback.selectionChanged();
@@ -711,71 +442,37 @@
                 const empty = document.getElementById('cart-empty');
                 const summary = document.getElementById('cart-summary');
                 const items = Object.values(this.cart);
-
-                if (items.length === 0) {
-                    list.innerHTML = '';
-                    empty.classList.remove('hidden');
-                    summary.classList.add('hidden');
-                } else {
-                    empty.classList.add('hidden');
-                    summary.classList.remove('hidden');
-                    list.innerHTML = '';
+                if (items.length === 0) { list.innerHTML = ''; empty.classList.remove('hidden'); summary.classList.add('hidden'); }
+                else {
+                    empty.classList.add('hidden'); summary.classList.remove('hidden'); list.innerHTML = '';
                     items.forEach(item => {
-                        const row = document.createElement('div');
-                        row.className = 'cart-item';
+                        const row = document.createElement('div'); row.className = 'cart-item';
                         const original = this.find(item.id);
-                        row.innerHTML = `
-                            <img src="${original?.image_url || ''}" class="cart-item-img">
-                            <div class="cart-item-info">
-                                <div class="cart-item-name">${item.name}</div>
-                                <div class="cart-item-price">${this.format(item.price)} so'm</div>
-                            </div>
-                            <div style="width: 100px">${this.qtyHtml(item.id, item.quantity)}</div>
-                        `;
+                        row.innerHTML = `<img src="${original?.image_url || ''}" class="cart-item-img"><div class="cart-item-info"><div class="cart-item-name">${item.name}</div><div class="cart-item-price">${this.format(item.price)} so'm</div></div><div style="width: 100px">${this.qtyHtml(item.id, item.quantity)}</div>`;
                         list.appendChild(row);
                     });
-
-                    const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
                     document.getElementById('summary-count').textContent = items.reduce((s, i) => s+i.quantity, 0) + ' ta';
-                    document.getElementById('summary-total').textContent = this.format(total) + ' so\'m';
+                    document.getElementById('summary-total').textContent = this.format(items.reduce((s, i) => s + i.price * i.quantity, 0)) + ' so\'m';
                 }
             }
 
             submitOrder() {
-                const items = Object.values(this.cart);
-                if (items.length === 0) return;
-                
-                const comment = document.getElementById('comment-area').value;
-                const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
-                const data = { items, total, comment };
-
+                const items = Object.values(this.cart); if (items.length === 0) return;
+                const data = { items, total: items.reduce((s, i) => s + i.price * i.quantity, 0), comment: document.getElementById('comment-area').value };
                 document.getElementById('success-overlay').classList.remove('hidden');
                 this.tg?.HapticFeedback.notificationOccurred('success');
-                
-                setTimeout(() => {
-                    this.tg?.sendData(JSON.stringify(data));
-                    this.tg?.close();
-                }, 2500);
+                setTimeout(() => { this.tg?.sendData(JSON.stringify(data)); this.tg?.close(); }, 2500);
             }
 
-            find(id) {
-                return this.categories.flatMap(c => c.items).find(i => i.id == id);
-            }
-
-            format(n) {
-                return Number(n).toLocaleString('uz-UZ').replace(/,/g, ' ');
-            }
-
+            find(id) { return this.categories.flatMap(c => c.items).find(i => i.id == id); }
+            format(n) { return Number(n).toLocaleString('uz-UZ').replace(/,/g, ' '); }
             setupScrollListener() {
                 window.onscroll = () => {
-                    const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-                    const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-                    const scrolled = (winScroll / height) * 100;
+                    const scrolled = ((document.body.scrollTop || document.documentElement.scrollTop) / (document.documentElement.scrollHeight - document.documentElement.clientHeight)) * 100;
                     document.getElementById("progress-bar").style.width = scrolled + "%";
                 };
             }
         }
-
         const app = new PremiumFoodApp();
         app.init();
     </script>
