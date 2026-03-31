@@ -16,41 +16,46 @@ try {
     $userRepo = new UserRepo();
     $user = $userRepo->findByTelegramId($telegramId);
     
-    $firstName = $user ? $user['first_name'] : '';
-    $lastName = $user ? $user['last_name'] : '';
+    $firstName = '';
+    $lastName = '';
+    if ($user) {
+        $firstName = $user['first_name'] ?? '';
+        $lastName = $user['last_name'] ?? '';
+    }
+    
     $photoUrl = null;
     
     if (defined('BOT_TOKEN')) {
-        // Fetch missing names
-        if (empty($firstName)) {
-            $chatUrl = 'https://api.telegram.org/bot' . BOT_TOKEN . '/getChat?chat_id=' . $telegramId;
-            $chatRes = @file_get_contents($chatUrl);
-            if ($chatRes) {
-                $chatData = json_decode($chatRes, true);
-                if (!empty($chatData['ok'])) {
-                    $firstName = $chatData['result']['first_name'] ?? '';
-                    $lastName = $chatData['result']['last_name'] ?? '';
-                }
+        function fetchTg($method, $params = []) {
+            $url = 'https://api.telegram.org/bot' . BOT_TOKEN . '/' . $method;
+            if ($params) $url .= '?' . http_build_query($params);
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 3); // 3 seconds absolute timeout
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+            $r = curl_exec($ch);
+            curl_close($ch);
+            return $r ? @json_decode($r, true) : null;
+        }
+
+        // 1. Fetch live username/firstname if empty locally
+        if (empty($firstName) || $firstName === 'Foydalanuvchi') {
+            $chatData = fetchTg('getChat', ['chat_id' => $telegramId]);
+            if ($chatData && !empty($chatData['ok'])) {
+                $firstName = $chatData['result']['first_name'] ?? '';
+                $lastName = $chatData['result']['last_name'] ?? '';
             }
         }
         
-        // Fetch Profile Picture
-        $photosUrl = 'https://api.telegram.org/bot' . BOT_TOKEN . '/getUserProfilePhotos?user_id=' . $telegramId . '&limit=1';
-        $pRes = @file_get_contents($photosUrl);
-        if ($pRes) {
-            $pData = json_decode($pRes, true);
-            if (!empty($pData['ok']) && !empty($pData['result']['photos'][0][0]['file_id'])) {
-                $fileId = $pData['result']['photos'][0][0]['file_id'];
-                
-                // Resolve file_id to file_path
-                $fUrl = 'https://api.telegram.org/bot' . BOT_TOKEN . '/getFile?file_id=' . $fileId;
-                $fRes = @file_get_contents($fUrl);
-                if ($fRes) {
-                    $fData = json_decode($fRes, true);
-                    if (!empty($fData['ok']) && !empty($fData['result']['file_path'])) {
-                        $photoUrl = 'https://api.telegram.org/file/bot' . BOT_TOKEN . '/' . $fData['result']['file_path'];
-                    }
-                }
+        // 2. Fetch Profile Picture from Telegram
+        $pData = fetchTg('getUserProfilePhotos', ['user_id' => $telegramId, 'limit' => 1]);
+        if ($pData && !empty($pData['ok']) && !empty($pData['result']['photos'][0][0]['file_id'])) {
+            $fileId = $pData['result']['photos'][0][0]['file_id'];
+            
+            // Resolve file_id to file_path
+            $fData = fetchTg('getFile', ['file_id' => $fileId]);
+            if ($fData && !empty($fData['ok']) && !empty($fData['result']['file_path'])) {
+                $photoUrl = 'https://api.telegram.org/file/bot' . BOT_TOKEN . '/' . $fData['result']['file_path'];
             }
         }
     }
