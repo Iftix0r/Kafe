@@ -94,29 +94,6 @@
                 try { await this.load(); } catch(e) {}
                 setTimeout(() => { const l=document.getElementById('ls'); if(l)l.style.display='none'; }, 2000);
             }
-            async sync(manual = false) {
-                try {
-                    if (!this.tg) this.tg = window.Telegram?.WebApp;
-                    const dbg = document.getElementById('u-debug');
-                    const uName = document.getElementById('u-name');
-                    const uPhone = document.getElementById('u-phone');
-                    const log = document.getElementById('final-log');
-                    let u = this.tg?.initDataUnsafe?.user;
-                    let source = "Bridge";
-                    if (!u && this.tg?.initData) { try { const p=new URLSearchParams(this.tg.initData); const s=p.get('user'); if(s){ u=JSON.parse(s); source="Bridge-Raw"; } } catch(e){} }
-                    if (!u) { const urlParams=new URLSearchParams(window.location.search); const tgId=urlParams.get('tg_id'); if(tgId){ u={id:tgId, first_name:'User'}; source="URL"; } }
-                    if (u) {
-                        if (uName) uName.textContent = [u.first_name, u.last_name].filter(Boolean).join(' ') || 'Foydalanuvchi';
-                        if (dbg) dbg.textContent = `ID: ${u.id} | v6.2 (${source})`;
-                        if (u.photo_url) document.getElementById('u-avatar').innerHTML = `<img src="${u.photo_url}" style="width:100%;height:100%;object-fit:cover">`;
-                        try {
-                            fetch(`../bot/api/register.php?id=${u.id}&first=${encodeURIComponent(u.first_name||'')}&last=${encodeURIComponent(u.last_name||'')}&user=${encodeURIComponent(u.username||'')}`).catch(e=>{});
-                            const r = await fetch(`../bot/api/user.php?id=${u.id}`);
-                            if (r.ok) { const d=await r.json(); if(d.ok && d.user) { if(uPhone) uPhone.textContent=d.user.phone_number||'-'; if(d.user.first_name && uName) uName.textContent=d.user.first_name+(d.user.last_name?' '+d.user.last_name:''); } }
-                        } catch(e){}
-                    } else { if(uName) uName.textContent="Mehmon"; if(dbg) dbg.textContent="v6.2 - No User"; }
-                } catch(err) { console.error(err); }
-            }
             async load() { const r=await fetch('https://olmazorgo.bigsaver.ru/bot/api/menu.php'); this.items=await r.json(); this.rC(); this.rI(); }
             rC() {
                 const c=document.getElementById('cats'); c.innerHTML='<button class="chip active" onclick="app.fil(\'all\',this)">Barchasi</button>';
