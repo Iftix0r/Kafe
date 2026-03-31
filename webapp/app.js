@@ -1,9 +1,11 @@
 const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
+tg.setBackgroundColor('#ffffff');
+tg.setHeaderColor('#ffffff');
 
-// Theme ranglarini darhol o'rnatish
-document.body.style.background = tg.themeParams.bg_color || '#ffffff';
+document.documentElement.style.background = '#ffffff';
+document.body.style.background = '#ffffff';
 document.body.style.color = tg.themeParams.text_color || '#000000';
 
 const MENU_API = '/bot/api/menu.php';
