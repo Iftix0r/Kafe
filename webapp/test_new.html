@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>🔧 WebApp Test</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+            padding: 20px; 
+            background: #f0f0f0; 
+            margin: 0;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; margin-bottom: 20px; }
+        .info { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin: 15px 0; 
+            font-size: 14px;
+        }
+        button { 
+            background: #007AFF; 
+            color: white; 
+            border: none; 
+            padding: 12px 20px; 
+            margin: 8px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 14px;
+        }
+        button:hover { background: #0056CC; }
+        .result { 
+            margin-top: 20px; 
+            padding: 15px; 
+            border-radius: 8px; 
+            font-size: 14px;
+        }
+        .success { background: #d4edda; border-left: 4px solid #28a745; }
+        .error { background: #f8d7da; border-left: 4px solid #dc3545; }
+        .warning { background: #fff3cd; border-left: 4px solid #ffc107; }
+        pre { 
+            font-size: 12px; 
+            overflow-x: auto; 
+            background: #f8f9fa; 
+            padding: 10px; 
+            border-radius: 4px; 
+            margin-top: 10px;
+        }
+        .status { 
+            display: inline-block; 
+            padding: 2px 8px; 
+            border-radius: 12px; 
+            font-size: 12px; 
+            font-weight: bold;
+        }
+        .status.ok { background: #d4edda; color: #155724; }
+        .status.fail { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 WebApp Diagnostika</h1>
+        
+        <div class="info">
+            <strong>🕐 Vaqt:</strong> <span id="time"></span><br>
+            <strong>🌐 URL:</strong> <span id="url"></span><br>
+            <strong>📱 User Agent:</strong> <span id="ua"></span><br>
+            <strong>📏 Screen:</strong> <span id="screen"></span>
+        </div>
+        
+        <div>
+            <button onclick="testAPI()">🔗 API Test</button>
+            <button onclick="testTelegram()">📱 Telegram Test</button>
+            <button onclick="testWebApp()">🌐 WebApp Test</button>
+            <button onclick="testNetwork()">📡 Network Test</button>
+            <button onclick="location.reload()">🔄 Refresh</button>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Initialize
+        document.getElementById('time').textContent = new Date().toLocaleString('uz-UZ');
+        document.getElementById('url').textContent = window.location.href;
+        document.getElementById('ua').textContent = navigator.userAgent.substring(0, 60) + '...';
+        document.getElementById('screen').textContent = `${screen.width}×${screen.height} (${window.innerWidth}×${window.innerHeight})`;
+        
+        async function testAPI() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<div class="warning">🔄 API test qilinmoqda...</div>';
+            
+            const apiUrl = 'https://olmazorgo.bigsaver.ru/bot/api/menu.php';
+            
+            try {
+                console.log('Testing API:', apiUrl);
+                
+                const startTime = Date.now();
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    cache: 'no-cache'
+                });
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+                
+                console.log('API Response:', response);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const text = await response.text();
+                console.log('API Response Text:', text);
+                
+                if (!text.trim()) {
+                    throw new Error('Server bo\'sh javob qaytardi');
+                }
+                
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (parseError) {
+                    throw new Error(`JSON Parse Error: ${parseError.message}\\nResponse: ${text.substring(0, 200)}...`);
+                }
+                
+                const totalItems = data.reduce((sum, cat) => sum + (cat.items?.length || 0), 0);
+                
+                result.innerHTML = `
+                    <div class="result success">
+                        <h3>✅ API Test Muvaffaqiyatli</h3>
+                        <p><strong>Response Time:</strong> ${responseTime}ms</p>
+                        <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
+                        <p><strong>Content-Type:</strong> ${response.headers.get('content-type')}</p>
+                        <p><strong>Kategoriyalar:</strong> ${data.length}</p>
+                        <p><strong>Jami mahsulotlar:</strong> ${totalItems}</p>
+                        <details style="margin-top: 10px;">
+                            <summary style="cursor: pointer; font-weight: bold;">📄 Raw Response (first 1000 chars)</summary>
+                            <pre>${text.substring(0, 1000)}${text.length > 1000 ? '...' : ''}</pre>
+                        </details>
+                        <details style="margin-top: 10px;">
+                            <summary style="cursor: pointer; font-weight: bold;">📊 Parsed Data</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('API Test Error:', error);
+                result.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ API Test Xatosi</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>URL:</strong> ${apiUrl}</p>
+                        <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+                        <p><strong>Suggestion:</strong> Serverda menu.php fayli mavjudligini va database ulanishini tekshiring</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function testTelegram() {
+            const result = document.getElementById('result');
+            
+            const tests = [
+                { name: 'window.Telegram', test: () => !!window.Telegram },
+                { name: 'Telegram.WebApp', test: () => !!window.Telegram?.WebApp },
+                { name: 'WebApp.ready', test: () => typeof window.Telegram?.WebApp?.ready === 'function' },
+                { name: 'WebApp.sendData', test: () => typeof window.Telegram?.WebApp?.sendData === 'function' },
+                { name: 'WebApp.MainButton', test: () => !!window.Telegram?.WebApp?.MainButton },
+                { name: 'WebApp.expand', test: () => typeof window.Telegram?.WebApp?.expand === 'function' }
+            ];
+            
+            let html = '<div class="result"><h3>📱 Telegram WebApp Test</h3>';
+            
+            tests.forEach(({name, test}) => {
+                const passed = test();
+                html += `<p><span class="status ${passed ? 'ok' : 'fail'}">${passed ? 'OK' : 'FAIL'}</span> ${name}</p>`;
+            });
+            
+            if (window.Telegram?.WebApp) {
+                const tg = window.Telegram.WebApp;
+                html += `<h4 style="margin-top: 15px;">WebApp Properties:</h4>`;
+                html += `<p><strong>Version:</strong> ${tg.version || 'Unknown'}</p>`;
+                html += `<p><strong>Platform:</strong> ${tg.platform || 'Unknown'}</p>`;
+                html += `<p><strong>Is Expanded:</strong> ${tg.isExpanded}</p>`;
+                html += `<p><strong>Viewport Height:</strong> ${tg.viewportHeight}px</p>`;
+                html += `<p><strong>Theme:</strong> ${JSON.stringify(tg.themeParams)}</p>`;
+            }
+            
+            html += '</div>';
+            result.innerHTML = html;
+        }
+        
+        async function testWebApp() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<div class="warning">🔄 WebApp files test...</div>';
+            
+            const files = [
+                'index_working.html',
+                'index_simple.html',
+                'style_full.css',
+                'app_full.js',
+                'debug.html'
+            ];
+            
+            let html = '<div class="result"><h3>🌐 WebApp Files Test</h3>';
+            
+            for (const file of files) {
+                try {
+                    const response = await fetch(file, { method: 'HEAD' });
+                    const status = response.ok ? 'ok' : 'fail';
+                    html += `<p><span class="status ${status}">${response.status}</span> ${file}</p>`;
+                } catch (error) {
+                    html += `<p><span class="status fail">ERROR</span> ${file}: ${error.message}</p>`;
+                }
+            }
+            
+            html += '<h4 style="margin-top: 15px;">Browser Capabilities:</h4>';
+            html += `<p><span class="status ${!!window.fetch ? 'ok' : 'fail'}">${!!window.fetch ? 'OK' : 'FAIL'}</span> Fetch API</p>`;
+            html += `<p><span class="status ${!!window.localStorage ? 'ok' : 'fail'}">${!!window.localStorage ? 'OK' : 'FAIL'}</span> Local Storage</p>`;
+            html += `<p><span class="status ${CSS.supports('display', 'grid') ? 'ok' : 'fail'}">${CSS.supports('display', 'grid') ? 'OK' : 'FAIL'}</span> CSS Grid</p>`;
+            html += `<p><span class="status ${!!navigator.geolocation ? 'ok' : 'fail'}">${!!navigator.geolocation ? 'OK' : 'FAIL'}</span> Geolocation</p>`;
+            
+            html += '</div>';
+            result.innerHTML = html;
+        }
+        
+        async function testNetwork() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<div class="warning">🔄 Network test...</div>';
+            
+            const urls = [
+                'https://olmazorgo.bigsaver.ru/',
+                'https://olmazorgo.bigsaver.ru/bot/',
+                'https://olmazorgo.bigsaver.ru/webapp/',
+                'https://olmazorgo.bigsaver.ru/bot/api/menu.php'
+            ];
+            
+            let html = '<div class="result"><h3>📡 Network Connectivity Test</h3>';
+            
+            for (const url of urls) {
+                try {
+                    const startTime = Date.now();
+                    const response = await fetch(url, { method: 'HEAD' });
+                    const endTime = Date.now();
+                    const responseTime = endTime - startTime;
+                    
+                    const status = response.ok ? 'ok' : 'fail';
+                    html += `<p><span class="status ${status}">${response.status}</span> ${url} (${responseTime}ms)</p>`;
+                } catch (error) {
+                    html += `<p><span class="status fail">ERROR</span> ${url}: ${error.message}</p>`;
+                }
+            }
+            
+            html += '<h4 style="margin-top: 15px;">Connection Info:</h4>';
+            html += `<p><strong>Online:</strong> ${navigator.onLine ? 'Yes' : 'No'}</p>`;
+            if (navigator.connection) {
+                html += `<p><strong>Connection Type:</strong> ${navigator.connection.effectiveType || 'Unknown'}</p>`;
+                html += `<p><strong>Downlink:</strong> ${navigator.connection.downlink || 'Unknown'} Mbps</p>`;
+            }
+            
+            html += '</div>';
+            result.innerHTML = html;
+        }
+        
+        // Auto-run API test
+        setTimeout(testAPI, 1000);
+    </script>
+</body>
+</html>

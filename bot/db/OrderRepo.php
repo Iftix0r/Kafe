@@ -8,11 +8,11 @@ class OrderRepo {
         $this->db = Database::get();
     }
 
-    public function create(int $userId, float $total, string $comment): int {
+    public function create(int $userId, float $total, string $comment, string $phone = '', string $address = ''): int {
         $stmt = $this->db->prepare(
-            'INSERT INTO orders (user_id, total_price, comment) VALUES (?, ?, ?)'
+            'INSERT INTO orders (user_id, total_price, comment, phone, address) VALUES (?, ?, ?, ?, ?)'
         );
-        $stmt->execute([$userId, $total, $comment]);
+        $stmt->execute([$userId, $total, $comment, $phone, $address]);
         return (int)$this->db->lastInsertId();
     }
 

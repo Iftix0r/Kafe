@@ -29,7 +29,16 @@ class OrderHandler {
         }
 
         try {
-            $orderId = $this->orderRepo->create($user['id'], $data['total'], $data['comment'] ?? '');
+            $phone = $data['phone'] ?? '';
+            $address = $data['address'] ?? '';
+            
+            $orderId = $this->orderRepo->create(
+                $user['id'], 
+                $data['total'], 
+                $data['comment'] ?? '',
+                $phone,
+                $address
+            );
             $this->orderRepo->addItems($orderId, $data['items']);
 
             $summary = $this->buildOrderSummary($orderId, $data, $user);
@@ -45,10 +54,7 @@ class OrderHandler {
             // Send notification to admin
             $this->sendMessage(ADMIN_TELEGRAM_ID,
                 "🆕 <b>YANGI BUYURTMA #{$orderId}</b>\n\n" . 
-                "👤 <b>Mijoz:</b> {$from['first_name']} {$from['last_name']}\n" .
-                "📱 <b>Telefon:</b> {$user['phone_number']}\n" .
-                ($from['username'] ? "👤 <b>Username:</b> @{$from['username']}\n" : "") .
-                "\n" . $summary
+                $summary
             );
             
         } catch (Exception $e) {
@@ -61,6 +67,27 @@ class OrderHandler {
         $lines = ["📋 <b>Buyurtma #{$orderId}</b>"];
         $lines[] = "";
         
+        // Customer info
+        $lines[] = "👤 <b>Mijoz ma'lumotlari:</b>";
+        $lines[] = "• Ism: {$user['first_name']} {$user['last_name']}";
+        if (isset($data['phone'])) {
+            $lines[] = "• Telefon: {$data['phone']}";
+        } else {
+            $lines[] = "• Telefon: {$user['phone_number']}";
+        }
+        if ($user['username']) {
+            $lines[] = "• Username: @{$user['username']}";
+        }
+        
+        // Address
+        if (isset($data['address'])) {
+            $lines[] = "";
+            $lines[] = "📍 <b>Manzil:</b> {$data['address']}";
+        }
+        
+        // Order items
+        $lines[] = "";
+        $lines[] = "🛒 <b>Buyurtma tarkibi:</b>";
         foreach ($data['items'] as $item) {
             $itemTotal = $item['price'] * $item['quantity'];
             $lines[] = "• {$item['name']} × {$item['quantity']} = " . 
@@ -74,6 +101,9 @@ class OrderHandler {
             $lines[] = "";
             $lines[] = "💬 <b>Izoh:</b> {$data['comment']}";
         }
+        
+        $lines[] = "";
+        $lines[] = "⏰ <b>Vaqt:</b> " . date('d.m.Y H:i');
         
         return implode("\n", $lines);
     }
