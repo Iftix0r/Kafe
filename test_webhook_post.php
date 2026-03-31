@@ -47,7 +47,7 @@ $context = stream_context_create([
     ]
 ]);
 
-$response = file_get_contents('https://olmazorgo.bigsaver.ru/bot/webhook_test.php', false, $context);
+$response = file_get_contents('https://olmazorgo.bigsaver.ru/bot/webhook.php', false, $context);
 
 echo "Response: " . ($response ?: 'No response') . "\n";
 
