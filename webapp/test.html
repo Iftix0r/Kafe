@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test</title>
+    <style>body{font-family:Arial;padding:20px;background:#fff}</style>
+</head>
+<body>
+    <h1>Test sahifa</h1>
+    <p>Vaqt: <span id="time"></span></p>
+    <button onclick="testAPI()">API Test</button>
+    <div id="result"></div>
+    
+    <script>
+        document.getElementById('time').textContent = new Date().toLocaleString();
+        
+        async function testAPI() {
+            try {
+                const res = await fetch('https://olmazor.bigsaver.ru/bot/api/menu.php');
+                const data = await res.json();
+                document.getElementById('result').innerHTML = 
+                    '<h3>API ishlayapti!</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (e) {
+                document.getElementById('result').innerHTML = 
+                    '<h3 style="color:red">API xatosi:</h3><p>' + e.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>

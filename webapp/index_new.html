@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="uz" style="background:#fff">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menyu - Yangi versiya</title>
+    <style>html,body{background:#fff!important;color:#000;min-height:100vh}</style>
+    <script>
+        // Keshni tozalash
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
+            });
+        }
+        
+        // Telegram WebApp skripti yuklanishini tekshirish
+        window.telegramLoaded = false;
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (!window.telegramLoaded && !window.Telegram) {
+                    console.error('Telegram WebApp skripti yuklanmadi!');
+                    document.body.innerHTML = `
+                        <div style="padding:20px;text-align:center;color:red">
+                            <h3>Xato!</h3>
+                            <p>Telegram WebApp skripti yuklanmadi.</p>
+                            <p>Iltimos, internetga ulanishni tekshiring.</p>
+                            <button onclick="location.reload()" style="padding:10px;background:#2481cc;color:white;border:none;border-radius:4px">Qayta yuklash</button>
+                        </div>
+                    `;
+                }
+            }, 5000);
+        });
+    </script>
+    <script src="https://telegram.org/js/telegram-web-app.js" onload="window.telegramLoaded = true" onerror="console.error('Telegram script yuklanmadi')"></script>
+    <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
+</head>
+<body style="background:#fff">
+    <!-- Kesh tozalash xabari -->
+    <div id="cache-notice" style="background:#ffffcc;padding:10px;text-align:center;border-bottom:1px solid #ddd">
+        <small>Yangi versiya yuklandi. Agar muammo bo'lsa, sahifani qayta yuklang.</small>
+        <button onclick="document.getElementById('cache-notice').style.display='none'" style="margin-left:10px;padding:2px 8px;background:#ccc;border:none;border-radius:3px">×</button>
+    </div>
+    
+    <div class="categories" id="categories"></div>
+    <div id="menu"><p style="padding:20px;text-align:center">Yuklanmoqda...</p></div>
+    <div class="comment-section">
+        <textarea id="comment" rows="2" placeholder="Izoh (ixtiyoriy)..."></textarea>
+    </div>
+    
+    <!-- Debug ma'lumotlari -->
+    <div id="debug-info" style="position:fixed;bottom:10px;right:10px;background:rgba(0,0,0,0.8);color:white;padding:5px;font-size:10px;border-radius:3px;z-index:1000;">
+        Debug: <span id="debug-text">Ishga tushmoqda...</span>
+    </div>
+    
+    <script>
+        // Debug ma'lumotlarini yangilash
+        function updateDebug(text) {
+            document.getElementById('debug-text').textContent = text;
+        }
+        
+        updateDebug('Sahifa yuklandi');
+        
+        // 3 soniyadan keyin test rejimini ko'rsatish
+        setTimeout(() => {
+            if (!document.getElementById('categories').innerHTML) {
+                updateDebug('Menu yuklanmadi, test rejimi');
+                document.getElementById('menu').innerHTML = `
+                    <div style="padding:20px;text-align:center">
+                        <h3>Test rejimi</h3>
+                        <p>Telegram WebApp: ${!!window.Telegram ? 'Mavjud' : 'Mavjud emas'}</p>
+                        <p>Current URL: ${window.location.href}</p>
+                        <p>Vaqt: ${new Date().toLocaleString()}</p>
+                        <button onclick="loadMenu()" style="padding:10px;margin:10px;background:#2481cc;color:white;border:none;border-radius:4px">Menu yuklash</button>
+                        <button onclick="window.open('https://olmazor.bigsaver.ru/bot/api/menu.php', '_blank')" style="padding:10px;margin:10px;background:#28a745;color:white;border:none;border-radius:4px">API test</button>
+                        <button onclick="location.reload()" style="padding:10px;margin:10px;background:#dc3545;color:white;border:none;border-radius:4px">Qayta yuklash</button>
+                    </div>
+                `;
+            }
+        }, 3000);
+    </script>
+    <script src="app_new.js?v=<?php echo time(); ?>"></script>
+</body>
+</html>
