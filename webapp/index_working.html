@@ -2,902 +2,160 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menyu</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kafe WebApp</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Telegram WebApp Script -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f5f5f5;
-            color: #333;
-            line-height: 1.5;
-        }
-        
-        .hidden { display: none !important; }
-        
-        /* Loading */
-        .loading {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: #fff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-        
-        .spinner {
-            width: 40px; height: 40px;
-            border: 3px solid #ddd;
-            border-top: 3px solid #007AFF;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* Header */
-        .header {
-            background: #fff;
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid #eee;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .header h1 {
-            font-size: 20px;
-            font-weight: 600;
-        }
-        
-        .cart-icon {
-            position: relative;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 8px;
-        }
-        
-        .cart-badge {
-            position: absolute;
-            top: 0; right: 0;
-            background: #007AFF;
-            color: white;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 2px 6px;
-            border-radius: 10px;
-            min-width: 18px;
-            text-align: center;
-        }
-        
-        /* Categories */
-        .categories {
-            padding: 15px 20px;
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            background: #fff;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .category-btn {
-            flex-shrink: 0;
-            padding: 8px 16px;
-            background: #f0f0f0;
-            border: none;
-            border-radius: 20px;
-            font-size: 14px;
-            color: #666;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-        
-        .category-btn.active {
-            background: #007AFF;
-            color: white;
-        }
-        
-        /* Menu */
-        .menu {
-            padding: 20px;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
-            padding-bottom: 100px;
-        }
-        
-        .menu-item {
-            background: #fff;
-            border-radius: 12px;
-            padding: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        .item-content {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .item-image {
-            width: 80px;
-            height: 80px;
-            border-radius: 8px;
-            object-fit: cover;
-            background: #f0f0f0;
-        }
-        
-        .no-image {
-            width: 80px;
-            height: 80px;
-            border-radius: 8px;
-            background: #f0f0f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 30px;
-            color: #ccc;
-        }
-        
-        .item-info {
-            flex: 1;
-        }
-        
-        .item-name {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-        
-        .item-description {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 8px;
-        }
-        
-        .item-price {
-            font-size: 18px;
-            font-weight: 700;
-            color: #007AFF;
-        }
-        
-        .item-controls {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .quantity-controls {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .qty-btn {
-            width: 36px;
-            height: 36px;
-            border: none;
-            border-radius: 50%;
-            background: #007AFF;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .qty-btn.minus {
-            background: #ff3b30;
-        }
-        
-        .qty-display {
-            font-size: 18px;
-            font-weight: 600;
-            min-width: 30px;
-            text-align: center;
-        }
-        
-        .add-btn {
-            background: #007AFF;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        
-        /* Cart Summary */
-        .cart-summary {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #fff;
-            border-top: 1px solid #eee;
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            z-index: 200;
-        }
-        
-        .cart-btn {
-            background: #007AFF;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        
-        /* Order Form Modal */
-        .order-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 20px;
-        }
-        
-        .order-form {
-            background: #fff;
-            border-radius: 12px;
-            padding: 20px;
-            width: 100%;
-            max-width: 400px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        
-        .order-form h3 {
-            margin-bottom: 20px;
-            text-align: center;
-            color: #333;
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #333;
-        }
-        
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: inherit;
-        }
-        
-        .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-        
-        .location-group {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .location-group input {
-            flex: 1;
-        }
-        
-        .location-btn {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            white-space: nowrap;
-        }
-        
-        .form-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .form-actions button {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        
-        .btn-cancel {
-            background: #6c757d;
-            color: white;
-        }
-        
-        .btn-submit {
-            background: #007AFF;
-            color: white;
-        }
-        
-        .order-summary {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        
-        .summary-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-        
-        .summary-total {
-            display: flex;
-            justify-content: space-between;
-            font-weight: 700;
-            font-size: 16px;
-            color: #007AFF;
-            border-top: 1px solid #ddd;
-            padding-top: 8px;
-            margin-top: 8px;
-        }
-        
-        /* Error */
-        .error {
-            text-align: center;
-            padding: 60px 20px;
-            color: #666;
-        }
-        
-        .error h3 {
-            font-size: 18px;
-            margin-bottom: 10px;
-            color: #333;
-        }
-        
-        .retry-btn {
-            background: #007AFF;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-        
-        @media (min-width: 600px) {
-            .menu {
-                grid-template-columns: 1fr 1fr;
-                padding: 20px 30px;
-            }
-        }
-    </style>
+    
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Loading -->
-    <div id="loading" class="loading">
-        <div class="spinner"></div>
-        <p>Menyu yuklanmoqda...</p>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-logo">☕</div>
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Yuklanmoqda...</div>
+        </div>
     </div>
 
-    <!-- Main App -->
-    <div id="app" class="hidden">
+    <!-- Main App Container -->
+    <div id="app" class="app hidden">
         <!-- Header -->
-        <div class="header">
-            <h1>Menyu</h1>
-            <div class="cart-icon" onclick="alert('Savat: ' + getTotalItems() + ' ta mahsulot')">
-                🛒
-                <span class="cart-badge" id="cart-badge">0</span>
+        <header class="header">
+            <div class="header-content">
+                <div class="header-title">
+                    <span id="header-emoji" class="header-emoji">🍽️</span>
+                    <span id="header-text" class="header-text">Menyu</span>
+                </div>
+                <div class="header-actions">
+                    <div id="cart-badge" class="header-badge">0</div>
+                </div>
             </div>
-        </div>
+        </header>
 
-        <!-- Categories -->
-        <div class="categories" id="categories">
-            <button class="category-btn active" onclick="filterCategory('all')">Barchasi</button>
-        </div>
-
-        <!-- Menu -->
-        <div class="menu" id="menu"></div>
-
-        <!-- Cart Summary -->
-        <div class="cart-summary hidden" id="cart-summary">
-            <div>
-                <div id="cart-count">0 ta mahsulot</div>
-                <div id="cart-total">0 so'm</div>
+        <!-- View: Menu -->
+        <main id="view-menu" class="view active">
+            <div class="categories-container">
+                <div id="categories" class="categories">
+                    <!-- Categories will be injected here -->
+                </div>
             </div>
-            <button class="cart-btn" onclick="submitOrder()">Buyurtma berish</button>
-        </div>
-    </div>
+            <div id="menu" class="main-content">
+                <!-- Menu items will be injected here -->
+            </div>
+            <div class="comment-section">
+                <div class="comment-container">
+                    <span class="comment-icon">💬</span>
+                    <textarea id="comment" placeholder="Buyurtma uchun izoh (ixtiyoriy)..." maxlength="200"></textarea>
+                    <div class="comment-counter"><span id="comment-count">0</span>/200</div>
+                </div>
+            </div>
+            <div id="menu-checkout-footer" class="checkout-footer hidden">
+                <button class="primary-btn checkout-btn" onclick="app.submitOrder()">
+                    🛒 Buyurtma berish — <span id="menu-total-price">0</span> so'm
+                </button>
+            </div>
+        </main>
 
-    <script>
-        // Global variables
-        let tg = window.Telegram?.WebApp;
-        let cart = {};
-        let categories = [];
-        let allItems = [];
-        
-        const MENU_API = 'https://olmazorgo.bigsaver.ru/bot/api/menu.php';
-        
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('App starting...');
-            initTelegram();
-            setTimeout(loadMenu, 1000);
-        });
-        
-        function initTelegram() {
-            if (tg) {
-                console.log('Telegram WebApp object:', tg);
-                console.log('WebApp version:', tg.version);
-                console.log('Platform:', tg.platform);
+        <!-- View: Cart -->
+        <main id="view-cart" class="view">
+            <div class="main-content">
+                <h2 class="section-title">Sizning savatingiz</h2>
+                <div id="cart-items-list" class="cart-items-list">
+                    <!-- Cart items will be injected here -->
+                </div>
+                <div id="cart-empty" class="cart-empty hidden">
+                    <div class="empty-icon">🛒</div>
+                    <h3>Savat bo'sh</h3>
+                    <p>Hali hech narsa tanlamadingiz</p>
+                    <button class="primary-btn" onclick="app.switchTab('menu')">Menyoga qaytish</button>
+                </div>
+                <div id="cart-summary-details" class="cart-summary-details hidden">
+                    <div class="summary-row">
+                        <span>Mahsulotlar:</span>
+                        <span id="summary-items-count">0 ta</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Jami:</span>
+                        <span id="summary-total-price">0 so'm</span>
+                    </div>
+                    <button class="primary-btn checkout-btn" onclick="app.submitOrder()" style="width:100%; margin-top:16px;">
+                        Buyurtmani tasdiqlash
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- View: Profile -->
+        <main id="view-profile" class="view">
+            <div class="main-content">
+                <h2 class="section-title">Mening profilim</h2>
+                <div id="user-profile-card" class="profile-card">
+                    <div class="profile-avatar" id="user-avatar">👤</div>
+                    <div class="profile-info">
+                        <h3 id="user-full-name">Foydalanuvchi</h3>
+                        <p id="user-telegram-id">ID: @username</p>
+                    </div>
+                </div>
                 
-                tg.ready();
-                tg.expand();
-                tg.setBackgroundColor('#f5f5f5');
-                tg.setHeaderColor('#ffffff');
-                
-                // Enable closing confirmation
-                tg.enableClosingConfirmation();
-                
-                // Set up main button (onClick only once!)
-                if (tg.MainButton) {
-                    tg.MainButton.setText('Buyurtma berish');
-                    tg.MainButton.color = '#007AFF';
-                    tg.MainButton.textColor = '#FFFFFF';
-                    tg.MainButton.onClick(submitOrder); // Only set once here
-                    console.log('Main button configured');
-                }
-                
-                console.log('Telegram WebApp ready');
-                console.log('sendData available:', typeof tg.sendData === 'function');
-                console.log('close available:', typeof tg.close === 'function');
-            } else {
-                console.log('Telegram WebApp not available - running in browser mode');
-            }
-        }
-        
-        async function loadMenu() {
-            try {
-                console.log('🔄 Loading menu from:', MENU_API);
-                
-                // Show loading message
-                document.getElementById('menu').innerHTML = '<div style="text-align:center;padding:40px;color:#666;">📋 Menyu yuklanmoqda...</div>';
-                
-                const response = await fetch(MENU_API, {
-                    method: 'GET',
-                    headers: { 
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    cache: 'no-cache'
-                });
-                
-                console.log('📡 Response status:', response.status);
-                console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const text = await response.text();
-                console.log('📄 Response text (first 500 chars):', text.substring(0, 500));
-                
-                if (!text.trim()) {
-                    throw new Error('Server bo\'sh javob qaytardi');
-                }
-                
-                let data;
-                try {
-                    data = JSON.parse(text);
-                } catch (parseError) {
-                    console.error('❌ JSON parse error:', parseError);
-                    throw new Error(`JSON parse xatosi: ${parseError.message}. Response: ${text.substring(0, 100)}...`);
-                }
-                
-                console.log('✅ Parsed data:', data);
-                
-                if (!Array.isArray(data)) {
-                    throw new Error(`Noto'g'ri data format. Expected array, got: ${typeof data}`);
-                }
-                
-                if (data.length === 0) {
-                    throw new Error('Menu bo\'sh - kategoriyalar topilmadi');
-                }
-                
-                // Validate data structure
-                let totalItems = 0;
-                data.forEach((category, index) => {
-                    if (!category.name) {
-                        console.warn(`⚠️ Category ${index} has no name:`, category);
-                    }
-                    if (category.items && Array.isArray(category.items)) {
-                        totalItems += category.items.length;
-                    }
-                });
-                
-                console.log(`📊 Found ${data.length} categories with ${totalItems} total items`);
-                
-                categories = data;
-                allItems = data.flatMap(cat => 
-                    cat.items ? cat.items.map(item => ({...item, categoryId: cat.id})) : []
-                );
-                
-                console.log(`🍽️ Processed ${allItems.length} items`);
-                
-                hideLoading();
-                renderCategories();
-                renderMenu();
-                
-                console.log('✅ Menu loaded successfully');
-                
-            } catch (error) {
-                console.error('❌ Menu loading error:', error);
-                hideLoading();
-                showError(error.message);
-            }
-        }
-        
-        function hideLoading() {
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('app').classList.remove('hidden');
-        }
-        
-        function renderCategories() {
-            const container = document.getElementById('categories');
-            
-            categories.forEach(category => {
-                const button = document.createElement('button');
-                button.className = 'category-btn';
-                button.textContent = category.name;
-                button.onclick = () => filterCategory(category.id);
-                container.appendChild(button);
-            });
-        }
-        
-        function renderMenu(items = allItems) {
-            const container = document.getElementById('menu');
-            container.innerHTML = '';
-            
-            if (items.length === 0) {
-                container.innerHTML = '<div class="error"><h3>Mahsulotlar topilmadi</h3></div>';
-                return;
-            }
-            
-            items.forEach(item => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'menu-item';
-                
-                const currentQty = cart[item.id]?.quantity || 0;
-                
-                itemDiv.innerHTML = `
-                    <div class="item-content">
-                        ${item.image_url 
-                            ? `<img src="${item.image_url}" alt="${item.name}" class="item-image">`
-                            : `<div class="no-image">🍽️</div>`
-                        }
-                        <div class="item-info">
-                            <div class="item-name">${escapeHtml(item.name)}</div>
-                            ${item.description ? `<div class="item-description">${escapeHtml(item.description)}</div>` : ''}
-                            <div class="item-price">${formatPrice(item.price)} so'm</div>
+                <div class="profile-sections">
+                    <div class="profile-item">
+                        <span class="item-icon">📦</span>
+                        <div class="item-text">
+                            <h4>Buyurtmalar tarixi</h4>
+                            <p>Hali buyurtmalar yo'q</p>
                         </div>
                     </div>
-                    <div class="item-controls">
-                        ${currentQty > 0 ? `
-                            <div class="quantity-controls">
-                                <button class="qty-btn minus" onclick="changeQuantity(${item.id}, -1)">−</button>
-                                <span class="qty-display">${currentQty}</span>
-                                <button class="qty-btn" onclick="changeQuantity(${item.id}, 1)">+</button>
-                            </div>
-                        ` : `
-                            <button class="add-btn" onclick="addToCart(${item.id}, '${escapeHtml(item.name)}', ${item.price})">
-                                Qo'shish
-                            </button>
-                        `}
+                    <div class="profile-item">
+                        <span class="item-icon">⚙️</span>
+                        <div class="item-text">
+                            <h4>Sozlamalar</h4>
+                            <p>Ilova tilini o'zgartirish</p>
+                        </div>
                     </div>
-                `;
-                
-                container.appendChild(itemDiv);
-            });
-        }
-        
-        function filterCategory(categoryId) {
-            // Update active button
-            document.querySelectorAll('.category-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            if (categoryId === 'all') {
-                renderMenu(allItems);
-            } else {
-                const filteredItems = allItems.filter(item => item.categoryId == categoryId);
-                renderMenu(filteredItems);
-            }
-        }
-        
-        function addToCart(itemId, itemName, itemPrice) {
-            cart[itemId] = {
-                id: itemId,
-                name: itemName,
-                price: parseFloat(itemPrice),
-                quantity: 1
-            };
-            
-            updateCartUI();
-            renderMenu(); // Re-render to show quantity controls
-            
-            console.log('Added to cart:', cart[itemId]);
-        }
-        
-        function changeQuantity(itemId, delta) {
-            if (!cart[itemId]) return;
-            
-            cart[itemId].quantity += delta;
-            
-            if (cart[itemId].quantity <= 0) {
-                delete cart[itemId];
-            }
-            
-            updateCartUI();
-            renderMenu(); // Re-render to update controls
-        }
-        
-        function updateCartUI() {
-            const items = Object.values(cart);
-            const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-            const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            
-            // Update badge
-            document.getElementById('cart-badge').textContent = totalItems;
-            
-            // Update cart summary
-            const cartSummary = document.getElementById('cart-summary');
-            const cartCount = document.getElementById('cart-count');
-            const cartTotal = document.getElementById('cart-total');
-            
-            if (totalItems > 0) {
-                cartSummary.classList.remove('hidden');
-                cartCount.textContent = `${totalItems} ta mahsulot`;
-                cartTotal.textContent = `${formatPrice(totalPrice)} so'm`;
-                
-                // Update Telegram MainButton (don't re-add onClick!)
-                if (tg && tg.MainButton) {
-                    tg.MainButton.setText(`Buyurtma berish — ${formatPrice(totalPrice)} so'm`);
-                    tg.MainButton.show();
-                    tg.MainButton.color = '#007AFF';
-                    // onClick already set in initTelegram, don't add again
-                }
-            } else {
-                cartSummary.classList.add('hidden');
-                if (tg) {
-                    tg.MainButton.hide();
-                }
-            }
-        }
-        
-        function showOrderForm() {
-            const items = Object.values(cart);
-            if (items.length === 0) {
-                alert('Savat bo\'sh');
-                return;
-            }
-            
-            // Fill order summary
-            const summaryContainer = document.getElementById('order-summary-modal');
-            let summaryHTML = '';
-            
-            items.forEach(item => {
-                const itemTotal = item.price * item.quantity;
-                summaryHTML += `
-                    <div class="summary-item">
-                        <span>${item.name} × ${item.quantity}</span>
-                        <span>${formatPrice(itemTotal)} so'm</span>
+                    <div class="profile-item">
+                        <span class="item-icon">📞</span>
+                        <div class="item-text">
+                            <h4>Yordam</h4>
+                            <p>Biz bilan bog'lanish</p>
+                        </div>
                     </div>
-                `;
-            });
-            
-            const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            summaryHTML += `
-                <div class="summary-total">
-                    <span>Jami:</span>
-                    <span>${formatPrice(totalPrice)} so'm</span>
                 </div>
-            `;
-            
-            summaryContainer.innerHTML = summaryHTML;
-            
-            // Show modal
-            document.getElementById('order-modal').classList.remove('hidden');
-        }
-        
-        function hideOrderForm() {
-            document.getElementById('order-modal').classList.add('hidden');
-        }
-        
-        function getLocation() {
-            const addressInput = document.getElementById('address');
-            
-            if (navigator.geolocation) {
-                addressInput.value = 'Joylashuv aniqlanmoqda...';
-                
-                navigator.geolocation.getCurrentPosition(
-                    async (position) => {
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
-                        
-                        try {
-                            // Try to get address from coordinates (simplified)
-                            addressInput.value = `📍 GPS: ${lat.toFixed(6)}, ${lon.toFixed(6)}`;
-                            
-                            // You can integrate with a geocoding service here
-                            // For now, we'll use coordinates
-                            
-                        } catch (error) {
-                            console.error('Geocoding error:', error);
-                            addressInput.value = `📍 Lat: ${lat.toFixed(6)}, Lon: ${lon.toFixed(6)}`;
-                        }
-                    },
-                    (error) => {
-                        console.error('Geolocation error:', error);
-                        addressInput.value = '';
-                        
-                        let errorMessage = 'Joylashuvni aniqlab bo\'lmadi';
-                        switch(error.code) {
-                            case error.PERMISSION_DENIED:
-                                errorMessage = 'Joylashuv ruxsati berilmagan';
-                                break;
-                            case error.POSITION_UNAVAILABLE:
-                                errorMessage = 'Joylashuv ma\'lumoti mavjud emas';
-                                break;
-                            case error.TIMEOUT:
-                                errorMessage = 'Joylashuv aniqlash vaqti tugadi';
-                                break;
-                        }
-                        
-                        alert(errorMessage + '. Iltimos, manzilni qo\'lda kiriting.');
-                    },
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 300000
-                    }
-                );
-            } else {
-                alert('Geolocation qo\'llab-quvvatlanmaydi. Iltimos, manzilni qo\'lda kiriting.');
-            }
-        }
-        
-        function submitOrder() {
-            const items = Object.values(cart);
-            if (items.length === 0) {
-                alert('Savat bo\'sh');
-                return;
-            }
-            
-            const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            
-            const orderData = {
-                items: items.map(item => ({
-                    menu_item_id: item.id,
-                    name: item.name,
-                    price: item.price,
-                    quantity: item.quantity
-                })),
-                total: totalPrice,
-                comment: '', // Bot orqali so'raladi
-                timestamp: new Date().toISOString()
-            };
-            
-            console.log('📤 Submitting order:', orderData);
-            console.log('📤 Order JSON:', JSON.stringify(orderData));
-            
-            try {
-                // Send to Telegram - WebApp yopiladi va bot davom etadi
-                if (tg && tg.sendData) {
-                    console.log('📱 Sending via Telegram WebApp...');
-                    
-                    // Show loading state
-                    const cartBtn = document.querySelector('.cart-btn');
-                    if (cartBtn) {
-                        cartBtn.textContent = 'Yuborilmoqda...';
-                        cartBtn.disabled = true;
-                    }
-                    
-                    // Update main button
-                    if (tg.MainButton) {
-                        tg.MainButton.setText('Yuborilmoqda...');
-                        tg.MainButton.showProgress();
-                    }
-                    
-                    // Send data - this will automatically close the webapp
-                    console.log('📤 About to call tg.sendData...');
-                    tg.sendData(JSON.stringify(orderData));
-                    // sendData() automatically closes the webapp, no need to call tg.close()
-                    console.log('✅ Data sent to Telegram');
-                } else {
-                    console.log('❌ Telegram WebApp not available or sendData not supported');
-                    
-                    // Fallback: show alert with order data
-                    alert('Telegram WebApp mavjud emas.\n\nBuyurtma ma\'lumotlari:\n' + 
-                          items.map(item => `${item.name} x${item.quantity}`).join('\n') + 
-                          `\n\nJami: ${formatPrice(totalPrice)} so'm`);
-                }
-                
-            } catch (error) {
-                console.error('❌ Order submission error:', error);
-                alert('Buyurtma yuborishda xatolik: ' + error.message);
-                
-                // Reset button state
-                const cartBtn = document.querySelector('.cart-btn');
-                if (cartBtn) {
-                    cartBtn.textContent = 'Buyurtma berish';
-                    cartBtn.disabled = false;
-                }
-                
-                if (tg && tg.MainButton) {
-                    tg.MainButton.setText('Buyurtma berish');
-                    tg.MainButton.hideProgress();
-                }
-            }
-        }
-        
-        function getTotalItems() {
-            return Object.values(cart).reduce((sum, item) => sum + item.quantity, 0);
-        }
-        
-        function showError(message) {
-            document.getElementById('menu').innerHTML = `
-                <div class="error">
-                    <div style="font-size: 60px; margin-bottom: 20px;">😕</div>
-                    <h3>Xatolik yuz berdi</h3>
-                    <p>${message}</p>
-                    <button class="retry-btn" onclick="location.reload()">Qayta urinish</button>
-                </div>
-            `;
-        }
-        
-        function formatPrice(price) {
-            return Number(price).toLocaleString('uz-UZ');
-        }
-        
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-    </script>
+            </div>
+        </main>
+
+        <!-- Success Animation -->
+        <div id="success-animation" class="success-animation hidden">
+            <div class="success-content">
+                <div class="success-checkmark">✅</div>
+                <div class="success-text">Buyurtmangiz qabul qilindi!</div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="app.switchTab('menu')" id="nav-menu">
+                <span class="nav-icon">🍽️</span>
+                <span class="nav-label">Menyu</span>
+            </button>
+            <button class="nav-item" onclick="app.switchTab('cart')" id="nav-cart">
+                <span class="nav-icon">🛒</span>
+                <span class="nav-label">Savat</span>
+            </button>
+            <button class="nav-item" onclick="app.switchTab('profile')" id="nav-profile">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">Profil</span>
+            </button>
+        </nav>
+    </div>
+
+    <script src="app.js"></script>
 </body>
 </html>

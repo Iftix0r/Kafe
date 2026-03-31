@@ -42,12 +42,8 @@ class KafeApp {
         this.tg.setBackgroundColor('#ffffff');
         this.tg.setHeaderColor('#ffffff');
 
-        // Main Button Setup
-        this.tg.MainButton.onClick(() => {
-            if (this.currentView === 'cart' || this.currentView === 'menu') {
-                this.submitOrder();
-            }
-        });
+        // Main Button Setup - Hiding as per user request to use internal buttons
+        this.tg.MainButton.hide();
 
         console.log('✅ Telegram initialized:', this.tg.initDataUnsafe?.user?.first_name);
     }
@@ -106,7 +102,9 @@ class KafeApp {
 
         // Specific View Rendering
         if (tabId === 'cart') this.renderCart();
-        if (tabId === 'menu') this.updateMainButton(); // Re-sync MainButton
+        
+        // Sync internal buttons visibility across views
+        this.updateMainButton();
         
         // Trigger haptic feedback
         this.tg?.HapticFeedback.selectionChanged();
@@ -237,11 +235,20 @@ class KafeApp {
             badge.style.display = count > 0 ? 'block' : 'none';
         }
 
-        if (count > 0 && this.tg) {
-            this.tg.MainButton.setText(`🛒 Buyurtma berish — ${this.formatPrice(total)} so'm`);
-            this.tg.MainButton.show();
-            this.tg.MainButton.color = '#2481cc';
-        } else if (this.tg) {
+        // Internal Checkout Footer (Menu view)
+        const menuFooter = document.getElementById('menu-checkout-footer');
+        const menuTotalPrice = document.getElementById('menu-total-price');
+        if (menuFooter) {
+            if (count > 0 && this.currentView === 'menu') {
+                menuFooter.classList.remove('hidden');
+                if (menuTotalPrice) menuTotalPrice.textContent = this.formatPrice(total);
+            } else {
+                menuFooter.classList.add('hidden');
+            }
+        }
+
+        // Always hide Telegram's MainButton as requested by user
+        if (this.tg) {
             this.tg.MainButton.hide();
         }
     }
@@ -257,7 +264,6 @@ class KafeApp {
             list.innerHTML = '';
             empty.classList.remove('hidden');
             summary.classList.add('hidden');
-            this.tg?.MainButton.hide();
         } else {
             empty.classList.add('hidden');
             summary.classList.remove('hidden');
