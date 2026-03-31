@@ -20,6 +20,7 @@ class KafeApp {
         
         // Initial load
         await this.loadMenu();
+        this.renderProfile();
         
         // Hide loading screen after data is ready
         setTimeout(() => {
@@ -101,6 +102,7 @@ class KafeApp {
 
         // Specific View Rendering
         if (tabId === 'cart') this.renderCart();
+        if (tabId === 'orders') this.loadOrders();
         
         // Sync internal buttons visibility across views
         this.updateMainButton();
@@ -112,8 +114,8 @@ class KafeApp {
     }
 
     updateHeader() {
-        const texts = { menu: 'Menyu', cart: 'Savat' };
-        const emojis = { menu: '🍽️', cart: '🛒' };
+        const texts = { menu: 'Menyu', cart: 'Savat', profile: 'Profil', orders: 'Buyurtmalarim' };
+        const emojis = { menu: '🍽️', cart: '🛒', profile: '👤', orders: '📦' };
         
         document.getElementById('header-text').textContent = texts[this.currentView];
         document.getElementById('header-emoji').textContent = emojis[this.currentView];

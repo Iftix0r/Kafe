@@ -93,7 +93,63 @@
             </div>
         </main>
 
+        <!-- View: Profile -->
+        <main id="view-profile" class="view">
+            <div class="main-content">
+                <h2 class="section-title">Mening profilim</h2>
+                <div id="user-profile-card" class="profile-card">
+                    <div class="profile-avatar" id="user-avatar">👤</div>
+                    <div class="profile-info">
+                        <h3 id="user-full-name">Foydalanuvchi</h3>
+                        <p id="user-telegram-id">ID: @username</p>
+                    </div>
+                </div>
+                
+                <div class="profile-sections">
+                    <div class="profile-item" onclick="app.switchTab('orders')">
+                        <span class="item-icon">📦</span>
+                        <div class="item-text">
+                            <h4>Buyurtmalarim</h4>
+                            <p>Barcha buyurtmalar tarixi</p>
+                        </div>
+                        <span class="item-arrow">›</span>
+                    </div>
+                    <div class="profile-item">
+                        <span class="item-icon">⚙️</span>
+                        <div class="item-text">
+                            <h4>Sozlamalar</h4>
+                            <p>Ilova tilini o'zgartirish</p>
+                        </div>
+                    </div>
+                    <div class="profile-item">
+                        <span class="item-icon">📞</span>
+                        <div class="item-text">
+                            <h4>Yordam</h4>
+                            <p>Biz bilan bog'lanish</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
 
+        <!-- View: Orders -->
+        <main id="view-orders" class="view">
+            <div class="main-content">
+                <div class="orders-header">
+                    <button class="back-btn" onclick="app.switchTab('profile')">‹ Orqaga</button>
+                    <h2 class="section-title">Buyurtmalarim</h2>
+                </div>
+                <div id="orders-list" class="orders-list">
+                    <!-- Orders will be loaded here -->
+                </div>
+                <div id="orders-empty" class="orders-empty hidden">
+                    <div class="empty-icon">📦</div>
+                    <h3>Buyurtmalar yo'q</h3>
+                    <p>Hali hech qanday buyurtma bermadingiz</p>
+                    <button class="primary-btn" onclick="app.switchTab('menu')">Buyurtma berish</button>
+                </div>
+            </div>
+        </main>
 
         <!-- Success Animation -->
         <div id="success-animation" class="success-animation hidden">
@@ -112,6 +168,10 @@
             <button class="nav-item" onclick="app.switchTab('cart')" id="nav-cart">
                 <span class="nav-icon">🛒</span>
                 <span class="nav-label">Savat</span>
+            </button>
+            <button class="nav-item" onclick="app.switchTab('profile')" id="nav-profile">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">Profil</span>
             </button>
         </nav>
     </div>

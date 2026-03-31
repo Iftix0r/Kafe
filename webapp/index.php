@@ -92,6 +92,104 @@ $phpTgId = $_GET['tg_id'] ?? '';
                 const r = await fetch('https://olmazorgo.bigsaver.ru/bot/api/menu.php');
                 this.items = await r.json(); this.rC(); this.rI();
             }
+            async sync(isManual=false) {
+                try {
+                    const dbg = document.getElementById('u-dbg');
+                    const uName = document.getElementById('u-name');
+                    const uPhone = document.getElementById('u-phone');
+                    const log = document.getElementById('dbg-log');
+                    
+                    if (!this.tg) this.tg = window.Telegram?.WebApp;
+                    
+                    let u = this.tg?.initDataUnsafe?.user;
+                    let source = "Bridge";
+
+                    let rawDump = "RAW: " + JSON.stringify(this.tg?.initDataUnsafe || {});
+
+                    if (!u && this.tg?.initData) {
+                        try {
+                            const p = new URLSearchParams(this.tg.initData);
+                            const s = p.get('user');
+                            if (s) { u = JSON.parse(s); source = "Bot-Raw"; }
+                        } catch(e) {}
+                    }
+                    
+                    const phpTgId = "<?= htmlspecialchars($phpTgId) ?>";
+                    if (!u && phpTgId) {
+                        u = { id: phpTgId, first_name: '' }; 
+                        source = "PHP-ID";
+                    }
+
+                    if (!u) {
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const tid = urlParams.get('tg_id');
+                        if (tid) { u = { id: tid, first_name: '' }; source = "URL-ID"; }
+                    }
+
+                    if (!u) {
+                        if (log) log.innerHTML = `Aniqlanmadingiz.<br><br><small style="color:red">${rawDump}<br>PHP_ID: '${phpTgId}'</small>`;
+                        if (dbg) dbg.textContent = "v6.7 - NotFound";
+                        return;
+                    }
+
+                    if (log) log.textContent = `Sinxronizatsiya (${source}: ${u.id})...`;
+                    if (uName) {
+                        if (u.first_name && u.first_name !== '') {
+                            uName.textContent = u.first_name;
+                        } else {
+                            uName.textContent = 'Yuklanmoqda...';
+                        }
+                    }
+                    if (dbg) dbg.textContent = `ID: ${u.id} | v6.7`;
+                    
+                    if (u.photo_url) {
+                        document.getElementById('u-avatar').innerHTML = `<img src="${u.photo_url}" style="width:100%;height:100%;object-fit:cover">`;
+                    }
+
+                    try {
+                        const regUrl = `../bot/api/register.php?id=${u.id}&first=${encodeURIComponent(u.first_name||'')}&last=${encodeURIComponent(u.last_name||'')}&user=${encodeURIComponent(u.username||'')}`;
+                        fetch(regUrl).catch(e => {});
+                    } catch(e){}
+
+                    try {
+                        const paths = ['../bot/api/user.php?id=', '/bot/api/user.php?id=', '/Kafe/bot/api/user.php?id='];
+                        let resData = null;
+                        for (let p of paths) {
+                            try {
+                                const r = await fetch(p + u.id);
+                                if (r.ok) { let j = await r.json(); if(j.ok){ resData = j; break; } }
+                            } catch(e){}
+                        }
+                        
+                        if (resData && resData.user) {
+                            if (uPhone) uPhone.textContent = resData.user.phone_number || 'Raqam yo\'q';
+                            
+                            // LIVE FETCH: Name
+                            const liveName = [resData.user.first_name, resData.user.last_name].filter(Boolean).join(' ');
+                            if (liveName && uName) {
+                                uName.textContent = liveName;
+                            } else if (uName && !liveName) {
+                                uName.textContent = 'Ism topilmadi';
+                            }
+                            
+                            // LIVE FETCH: Avatar
+                            if (resData.user.photo_url) {
+                                document.getElementById('u-avatar').innerHTML = `<img src="${resData.user.photo_url}" style="width:100%;height:100%;object-fit:cover">`;
+                            }
+                            
+                            if (log) log.innerHTML = `Muvaffaqiyatli ulangan! ✅<br><small style="opacity:0.5">${rawDump}</small>`;
+                        } else {
+                            if (uPhone) uPhone.textContent = "Bazada yo'q";
+                            if (uName) uName.textContent = "Ism topilmadi";
+                            if (log) log.textContent = "Siz bazada yo'qsiz. Telefoningizni yuboring.";
+                        }
+                    } catch(err) {
+                        if (log) log.innerHTML = `API Xato.<br><small style="opacity:0.5">${rawDump}</small>`;
+                        if (uPhone) uPhone.textContent = "Net Error";
+                        if (uName) uName.textContent = "Yuklanmadi";
+                    }
+                } catch (err) { const log = document.getElementById('dbg-log'); if(log) log.textContent = "JS Error: " + err.message; }
+            }
             rC() {
                 const c = document.getElementById('cats'); if(!c) return;
                 c.innerHTML = '<button class="chip active" onclick="app.fil(\'all\',this)">Barchasi</button>';
