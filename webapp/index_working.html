@@ -532,20 +532,33 @@
             }
 
             initTG() {
-                if (!this.tg) return;
+                if (!this.tg) {
+                    console.warn('Telegram WebApp not detected');
+                    return;
+                }
+                
                 this.tg.ready();
                 this.tg.expand();
                 this.tg.enableClosingConfirmation();
-                this.tg.MainButton.hide();
                 
-                if (this.tg.initDataUnsafe?.user) {
-                    const user = this.tg.initDataUnsafe.user;
-                    document.getElementById('u-name').textContent = user.first_name + ' ' + (user.last_name || '');
+                // Colors sync with Telegram Theme
+                document.documentElement.style.setProperty('--primary', this.tg.themeParams.button_color || '#2481cc');
+                
+                const user = this.tg.initDataUnsafe?.user;
+                if (user) {
+                    console.log('User found:', user);
+                    const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+                    document.getElementById('u-name').textContent = fullName || 'Foydalanuvchi';
                     document.getElementById('u-id').textContent = user.username ? '@' + user.username : 'ID: ' + user.id;
+                    
                     if (user.photo_url) {
-                        document.getElementById('u-avatar').innerHTML = `<img src="${user.photo_url}" style="width:100%;height:100%;object-fit:cover">`;
+                        document.getElementById('u-avatar').innerHTML = `<img src="${user.photo_url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='👤'">`;
                     }
+                } else {
+                    console.warn('User data NOT found in initDataUnsafe');
                 }
+                
+                this.tg.MainButton.hide();
             }
 
             async fetchMenu() {
