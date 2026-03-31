@@ -136,54 +136,6 @@
                 // Always hide loading after 2.5s
                 setTimeout(() => { const l=document.getElementById('ls'); if(l)l.style.display='none'; }, 2500);
             }
-            async sync(manual = false) {
-                if (!this.tg) this.tg = window.Telegram?.WebApp;
-                const dbg = document.getElementById('u-debug');
-                const uName = document.getElementById('u-name');
-                const uPhone = document.getElementById('u-phone');
-                const log = document.getElementById('final-log');
-                
-                let u = this.tg?.initDataUnsafe?.user;
-                if (!u && this.tg?.initData) {
-                    try {
-                        const s = JSON.parse(new URLSearchParams(this.tg.initData).get('user'));
-                        if (s) u = s;
-                    } catch(e){}
-                }
-
-                if (u) {
-                    if (uName) uName.textContent = [u.first_name, u.last_name].filter(Boolean).join(' ') || 'User';
-                    if (dbg) dbg.textContent = `ID: ${u.id} | v6.0`;
-                    if (u.photo_url) document.getElementById('u-avatar').innerHTML = `<img src="${u.photo_url}" style="width:100%;height:100%;object-fit:cover">`;
-                    if (log) log.textContent = `User Identified: ${u.id}`;
-
-                    try {
-                        // Testing multiple path versions for robust PHP connection
-                        const paths = ['../bot/api/user.php?id=', '/bot/api/user.php?id=', '/Kafe/bot/api/user.php?id='];
-                        let resData = null;
-                        for (let p of paths) {
-                            try {
-                                const r = await fetch(p + u.id);
-                                if (r.ok) { let j = await r.json(); if(j.ok){ resData = j; break; } }
-                            } catch(e){}
-                        }
-                        
-                        if (resData && resData.user) {
-                            if (uPhone) uPhone.textContent = resData.user.phone_number || '-';
-                            if (resData.user.first_name && uName) uName.textContent = resData.user.first_name + (resData.user.last_name?' '+resData.user.last_name:'');
-                            if (log) log.textContent += " | DB: SUCCESS";
-                        } else if (uPhone) {
-                            uPhone.textContent = "Bazada yo'q";
-                            if (log) log.textContent += " | DB: No User Found";
-                        }
-                    } catch(e) { if(uPhone) uPhone.textContent = "Xato"; if(log) log.textContent += " | DB: FETCH ERROR"; }
-                } else {
-                    if (uName) uName.textContent = "Mehmon";
-                    if (uPhone) uPhone.textContent = "—";
-                    if (dbg) dbg.textContent = "v6.0 - No Data Found";
-                    if (log) log.textContent = "User Unknown - Check Connection";
-                }
-            }
             async load() {
                 const r = await fetch('https://olmazorgo.bigsaver.ru/bot/api/menu.php');
                 this.items = await r.json(); this.rC(); this.rI();

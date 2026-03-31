@@ -54,6 +54,7 @@ class StartHandler {
     }
 
     private function sendWelcomeMessage(int $chatId, string $firstName): void {
+        $urlWithId = WEBAPP_URL . '&tg_id=' . $chatId;
         $this->sendRequest('sendMessage', [
             'chat_id' => $chatId,
             'text' => "🎉 <b>Tabriklaymiz, {$firstName}!</b>\n\n" .
@@ -63,7 +64,7 @@ class StartHandler {
             'parse_mode' => 'HTML',
             'reply_markup' => json_encode([
                 'inline_keyboard' => [[
-                    ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL]],
+                    ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => $urlWithId]],
                 ]],
                 'remove_keyboard' => true
             ]),
@@ -71,6 +72,7 @@ class StartHandler {
     }
 
     private function sendMenuButton(int $chatId, string $firstName): void {
+        $urlWithId = WEBAPP_URL . '&tg_id=' . $chatId;
         $this->sendRequest('sendMessage', [
             'chat_id'      => $chatId,
             'text'         => "Assalomu alaykum, {$firstName}! 👋\n\n" .
@@ -81,7 +83,7 @@ class StartHandler {
             'parse_mode' => 'HTML',
             'reply_markup' => json_encode([
                 'inline_keyboard' => [[
-                    ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL]],
+                    ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => $urlWithId]],
                 ]],
             ]),
         ]);
