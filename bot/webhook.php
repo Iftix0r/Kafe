@@ -115,7 +115,7 @@ if (isset($message['contact'])) {
     
     $keyboard = [
         'inline_keyboard' => [[
-            ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL]]
+            ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL . '&tg_id=' . $chatId]]
         ]],
         'remove_keyboard' => true
     ];

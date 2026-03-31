@@ -165,7 +165,7 @@ if (isset($message['text']) && $message['text'] === '/start') {
         
         $keyboard = [
             'keyboard' => [
-                [['text' => '🍽 Menu', 'web_app' => ['url' => WEBAPP_URL]]],
+                [['text' => '🍽 Menu', 'web_app' => ['url' => WEBAPP_URL . '&tg_id=' . $chatId]]],
                 [['text' => '🛒 Savat'], ['text' => '👤 Profil']]
             ],
             'resize_keyboard' => true,
@@ -225,7 +225,7 @@ if (isset($message['contact'])) {
     // because tg.sendData() only works with regular keyboard web apps
     $keyboard = [
         'keyboard' => [[
-            ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL]]
+            ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL . '&tg_id=' . $chatId]]
         ]],
         'resize_keyboard' => true,
     ];
@@ -461,7 +461,7 @@ if (isset($message['text'])) {
                 // Send to customer - use regular keyboard for web_app
                 $keyboard = [
                     'keyboard' => [
-                        [['text' => '🍽 Menu', 'web_app' => ['url' => WEBAPP_URL]]],
+                        [['text' => '🍽 Menu', 'web_app' => ['url' => WEBAPP_URL . '&tg_id=' . $chatId]]],
                         [['text' => '🛒 Savat'], ['text' => '👤 Profil']]
                     ],
                     'resize_keyboard' => true,
@@ -489,7 +489,7 @@ if (isset($message['text'])) {
                 
                 $keyboard = [
                     'keyboard' => [
-                        [['text' => '🍽 Menu', 'web_app' => ['url' => WEBAPP_URL]]],
+                        [['text' => '🍽 Menu', 'web_app' => ['url' => WEBAPP_URL . '&tg_id=' . $chatId]]],
                         [['text' => '🛒 Savat'], ['text' => '👤 Profil']]
                     ],
                     'resize_keyboard' => true,
@@ -514,7 +514,7 @@ if (isset($message['text'])) {
         
         $keyboard = [
             'keyboard' => [
-                [['text' => '🍽 Menu', 'web_app' => ['url' => WEBAPP_URL]]],
+                [['text' => '🍽 Menu', 'web_app' => ['url' => WEBAPP_URL . '&tg_id=' . $chatId]]],
                 [['text' => '🛒 Savat'], ['text' => '👤 Profil']]
             ],
             'resize_keyboard' => true,
