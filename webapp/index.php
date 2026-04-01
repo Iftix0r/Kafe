@@ -226,84 +226,108 @@ $phpTgId = $_GET['tg_id'] ?? '';
                 const ordersEmpty = document.getElementById('orders-empty');
                 
                 try {
-                    // Demo buyurtmalar
-                    const orders = [
-                        {
-                            id: 1001,
-                            date: '2024-03-15',
-                            status: 'completed',
-                            items: [
-                                { name: 'Osh', quantity: 2, price: 25000 },
-                                { name: 'Choy', quantity: 1, price: 5000 }
-                            ],
-                            total: 55000
-                        },
-                        {
-                            id: 1002,
-                            date: '2024-03-14',
-                            status: 'pending',
-                            items: [
-                                { name: 'Manti', quantity: 1, price: 30000 }
-                            ],
-                            total: 30000
-                        }
-                    ];
+                    ordersList.innerHTML = '<div style="text-align:center;padding:20px;color:#999"><i class="fas fa-spinner fa-spin"></i> Yuklanmoqda...</div>';
                     
-                    if (orders.length === 0) {
+                    let u = this.tg?.initDataUnsafe?.user;
+                    if (!u) {
+                        try {
+                            const p = new URLSearchParams(this.tg?.initData || '');
+                            const s = p.get('user');
+                            if (s) { u = JSON.parse(s); }
+                        } catch(e) {}
+                    }
+                    if (!u) {
+                        const tid = new URLSearchParams(window.location.search).get('tg_id');
+                        if (tid) { u = { id: tid }; }
+                    }
+                    const phpTgId = "<?= htmlspecialchars($phpTgId) ?>";
+                    if (!u && phpTgId) { u = { id: phpTgId }; }
+                    
+                    if (!u) {
+                        ordersList.innerHTML = '<div style="text-align:center;padding:20px;color:red">Foydalanuvchi aniqlanmadi</div>';
+                        return;
+                    }
+                    
+                    const res = await fetch('../bot/api/orders.php?id=' + u.id);
+                    const data = await res.json();
+                    
+                    if (!data.ok || !data.orders || data.orders.length === 0) {
                         ordersList.innerHTML = '';
                         ordersEmpty.classList.remove('hidden');
                     } else {
                         ordersEmpty.classList.add('hidden');
                         ordersList.innerHTML = '';
                         
-                        orders.forEach(order => {
+                        data.orders.forEach(order => {
                             const statusText = {
-                                pending: 'Kutilmoqda',
-                                completed: 'Tayyor',
-                                cancelled: 'Bekor qilingan'
+                                'new': '🆕 Yangi',
+                                'confirmed': '✅ Tasdiqlangan',
+                                'preparing': '👨‍🍳 Tayyorlanmoqda',
+                                'on_way': '🚚 Yo\'lda',
+                                'delivered': '🚀 Yetkazildi',
+                                'cancelled': '❌ Bekor qilingan'
                             };
                             
                             const statusClass = order.status;
                             const statusBg = {
-                                pending: '#fef3c7',
-                                completed: '#d1fae5',
-                                cancelled: '#fee2e2'
+                                'new': '#e0f2fe',
+                                'confirmed': '#d1fae5',
+                                'preparing': '#fef3c7',
+                                'on_way': '#e0e7ff',
+                                'delivered': '#dcfce7',
+                                'cancelled': '#fee2e2'
                             };
                             const statusColor = {
-                                pending: '#d97706',
-                                completed: '#059669',
-                                cancelled: '#dc2626'
+                                'new': '#0284c7',
+                                'confirmed': '#059669',
+                                'preparing': '#d97706',
+                                'on_way': '#4f46e5',
+                                'delivered': '#16a34a',
+                                'cancelled': '#dc2626'
                             };
                             
                             const orderCard = document.createElement('div');
                             orderCard.style = 'background:white;border:1px solid #e6e6e6;border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 2px 4px rgba(0,0,0,0.02)';
-                            orderCard.innerHTML = `
+                            
+                            let trackingHtml = '';
+                            if (order.tracking_link && order.tracking_link.trim() !== '') {
+                                trackingHtml = \`
+                                <div style="margin-top:12px">
+                                    <a href="\${order.tracking_link.replace(/"/g, '&quot;')}" target="_blank" style="display:block;width:100%;text-align:center;padding:10px;background:var(--p);color:white;text-decoration:none;border-radius:12px;font-weight:700">
+                                        <i class="fas fa-map-marker-alt"></i> Kuryerni kuzatish
+                                    </a>
+                                </div>
+                                \`;
+                            }
+                            
+                            orderCard.innerHTML = \`
                                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
                                     <div>
-                                        <div style="font-weight:600;color:var(--p)">Buyurtma #${order.id}</div>
-                                        <div style="font-size:0.8rem;color:#707579">${order.date}</div>
+                                        <div style="font-weight:600;color:var(--p)">Buyurtma #\${order.id}</div>
+                                        <div style="font-size:0.8rem;color:#707579">\${order.date}</div>
                                     </div>
-                                    <div style="padding:4px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;background:${statusBg[statusClass]};color:${statusColor[statusClass]}">${statusText[order.status]}</div>
+                                    <div style="padding:4px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;background:\${statusBg[statusClass]||'#eee'};color:\${statusColor[statusClass]||'#333'}">\${statusText[order.status]||order.status}</div>
                                 </div>
                                 <div style="margin-bottom:12px">
-                                    ${order.items.map(item => `
+                                    \${order.items.map(item => \`
                                         <div style="display:flex;justify-content:space-between;font-size:0.9rem;margin-bottom:4px">
-                                            <span>${item.name} x${item.quantity}</span>
-                                            <span>${this.fmt(item.price * item.quantity)}</span>
+                                            <span>\${item.name} x\${item.quantity}</span>
+                                            <span>\${this.fmt(item.price * item.quantity)}</span>
                                         </div>
-                                    `).join('')}
+                                    \`).join('')}
                                 </div>
                                 <div style="display:flex;justify-content:space-between;font-weight:700;color:var(--p);padding-top:8px;border-top:1px dashed #e6e6e6">
                                     <span>Jami:</span>
-                                    <span>${this.fmt(order.total)}</span>
+                                    <span>\${this.fmt(order.total)}</span>
                                 </div>
-                            `;
+                                \${trackingHtml}
+                            \`;
                             ordersList.appendChild(orderCard);
                         });
                     }
                 } catch (error) {
                     console.error('Buyurtmalarni yuklashda xato:', error);
-                    ordersList.innerHTML = '<div style="text-align:center;padding:20px;color:red">Buyurtmalarni yuklab bo\'lmadi</div>';
+                    ordersList.innerHTML = '<div style="text-align:center;padding:20px;color:red">Buyurtmalarni yuklab bo\\'lmadi</div>';
                 }
             }
             async sync(isManual=false) {

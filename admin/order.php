@@ -20,7 +20,7 @@ $items = $items->fetchAll();
 
 $statusLabels = [
     'new'=>'🆕 Yangi','confirmed'=>'✅ Tasdiqlangan',
-    'preparing'=>'👨🍳 Tayyorlanmoqda','delivered'=>'🚀 Yetkazildi','cancelled'=>'❌ Bekor'
+    'preparing'=>'👨🍳 Tayyorlanmoqda','on_way'=>'🚚 Yo\'lda','delivered'=>'🚀 Yetkazildi','cancelled'=>'❌ Bekor'
 ];
 ?>
 <!DOCTYPE html>
@@ -107,11 +107,11 @@ $statusLabels = [
 
     <div class="detail-card">
         <h3><i class="fas fa-info-circle"></i> Buyurtma holati</h3>
-        <form method="POST" action="update_status.php" style="display: flex; gap: var(--spacing-md); align-items: center; flex-wrap: wrap;">
+        <form method="POST" action="update_status.php" style="display: flex; gap: var(--spacing-md); align-items: flex-end; flex-wrap: wrap;">
             <input type="hidden" name="id" value="<?= $id ?>">
             <input type="hidden" name="redirect" value="order.php?id=<?= $id ?>">
             
-            <div style="flex: 1; min-width: 200px;">
+            <div style="flex: 1; min-width: 150px;">
                 <label class="form-label">Holat:</label>
                 <select name="status" class="form-select">
                     <?php foreach ($statusLabels as $key => $label): ?>
@@ -122,7 +122,12 @@ $statusLabels = [
                 </select>
             </div>
             
-            <button type="submit" class="btn btn-success">
+            <div style="flex: 2; min-width: 200px;">
+                <label class="form-label">Kuryer/qayd havolasi (ixtiyoriy):</label>
+                <input type="url" name="tracking_link" class="form-select" style="background:#fff; border:1px solid #ccc; padding:0.5rem;" value="<?= htmlspecialchars($order['tracking_link'] ?? '') ?>" placeholder="https://yandex...">
+            </div>
+            
+            <button type="submit" class="btn btn-success" style="height: 42px;">
                 <i class="fas fa-save"></i> Saqlash
             </button>
         </form>
@@ -134,6 +139,7 @@ $statusLabels = [
                     'new' => 'fas fa-plus-circle',
                     'confirmed' => 'fas fa-check-circle',
                     'preparing' => 'fas fa-fire',
+                    'on_way' => 'fas fa-truck',
                     'delivered' => 'fas fa-shipping-fast',
                     'cancelled' => 'fas fa-times-circle'
                 ];
@@ -141,6 +147,13 @@ $statusLabels = [
                 <i class="<?= $statusIcons[$order['status']] ?? 'fas fa-question-circle' ?>"></i>
                 Joriy holat: <?= $statusLabels[$order['status']] ?? $order['status'] ?>
             </span>
+            <?php if (!empty($order['tracking_link'])): ?>
+            <div style="margin-top: 10px;">
+                <a href="<?= htmlspecialchars($order['tracking_link']) ?>" target="_blank" class="btn btn-primary btn-sm">
+                    <i class="fas fa-map-marker-alt"></i> Kuryerni kuzatish
+                </a>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>

@@ -49,6 +49,7 @@ $statusLabels = [
     'new'       => ['🆕 Yangi',       'new'],
     'confirmed' => ['✅ Tasdiqlangan', 'confirmed'],
     'preparing' => ['👨‍🍳 Tayyorlanmoqda','preparing'],
+    'on_way'    => ['🚚 Yo\'lda',        'on_way'],
     'delivered' => ['🚀 Yetkazildi',   'delivered'],
     'cancelled' => ['❌ Bekor',        'cancelled'],
 ];
@@ -157,6 +158,9 @@ $statusLabels = [
         <a href="?status=preparing" class="tab <?= $status === 'preparing' ? 'active' : '' ?>">
             <i class="fas fa-fire"></i> Tayyorlanmoqda (<?= $counts['preparing'] ?? 0 ?>)
         </a>
+        <a href="?status=on_way" class="tab <?= $status === 'on_way' ? 'active' : '' ?>">
+            <i class="fas fa-truck"></i> Yo'lda (<?= $counts['on_way'] ?? 0 ?>)
+        </a>
         <a href="?status=delivered" class="tab <?= $status === 'delivered' ? 'active' : '' ?>">
             <i class="fas fa-shipping-fast"></i> Yetkazildi (<?= $counts['delivered'] ?? 0 ?>)
         </a>
@@ -212,6 +216,7 @@ $statusLabels = [
                                     'new' => 'fas fa-plus-circle',
                                     'confirmed' => 'fas fa-check-circle',
                                     'preparing' => 'fas fa-fire',
+                                    'on_way' => 'fas fa-truck',
                                     'delivered' => 'fas fa-shipping-fast',
                                     'cancelled' => 'fas fa-times-circle'
                                 ];
