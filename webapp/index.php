@@ -291,37 +291,37 @@ $phpTgId = $_GET['tg_id'] ?? '';
                             
                             let trackingHtml = '';
                             if (order.tracking_link && order.tracking_link.trim() !== '') {
-                                trackingHtml = \`
+                                trackingHtml = `
                                 <div style="margin-top:12px">
-                                    <a href="\${order.tracking_link.replace(/"/g, '&quot;')}" target="_blank" style="display:block;width:100%;text-align:center;padding:10px;background:var(--p);color:white;text-decoration:none;border-radius:12px;font-weight:700">
+                                    <a href="${order.tracking_link.replace(/"/g, '&quot;')}" target="_blank" style="display:block;width:100%;text-align:center;padding:10px;background:var(--p);color:white;text-decoration:none;border-radius:12px;font-weight:700">
                                         <i class="fas fa-map-marker-alt"></i> Kuryerni kuzatish
                                     </a>
                                 </div>
-                                \`;
+                                `;
                             }
                             
-                            orderCard.innerHTML = \`
+                            orderCard.innerHTML = `
                                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
                                     <div>
-                                        <div style="font-weight:600;color:var(--p)">Buyurtma #\${order.id}</div>
-                                        <div style="font-size:0.8rem;color:#707579">\${order.date}</div>
+                                        <div style="font-weight:600;color:var(--p)">Buyurtma #${order.id}</div>
+                                        <div style="font-size:0.8rem;color:#707579">${order.date}</div>
                                     </div>
-                                    <div style="padding:4px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;background:\${statusBg[statusClass]||'#eee'};color:\${statusColor[statusClass]||'#333'}">\${statusText[order.status]||order.status}</div>
+                                    <div style="padding:4px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;background:${statusBg[statusClass]||'#eee'};color:${statusColor[statusClass]||'#333'}">${statusText[order.status]||order.status}</div>
                                 </div>
                                 <div style="margin-bottom:12px">
-                                    \${order.items.map(item => \`
+                                    ${order.items.map(item => `
                                         <div style="display:flex;justify-content:space-between;font-size:0.9rem;margin-bottom:4px">
-                                            <span>\${item.name} x\${item.quantity}</span>
-                                            <span>\${this.fmt(item.price * item.quantity)}</span>
+                                            <span>${item.name} x${item.quantity}</span>
+                                            <span>${this.fmt(item.price * item.quantity)}</span>
                                         </div>
-                                    \`).join('')}
+                                    `).join('')}
                                 </div>
                                 <div style="display:flex;justify-content:space-between;font-weight:700;color:var(--p);padding-top:8px;border-top:1px dashed #e6e6e6">
                                     <span>Jami:</span>
-                                    <span>\${this.fmt(order.total)}</span>
+                                    <span>${this.fmt(order.total)}</span>
                                 </div>
-                                \${trackingHtml}
-                            \`;
+                                ${trackingHtml}
+                            `;
                             ordersList.appendChild(orderCard);
                         });
                     }
