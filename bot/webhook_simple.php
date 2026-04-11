@@ -108,10 +108,13 @@ function getOrCreateUser($from) {
         $user = $userRepo->findByTelegramId($from['id']);
         if (!$user) {
             $userRepo->create(['telegram_id' => $from['id'], 'first_name' => $from['first_name'] ?? '', 'last_name' => $from['last_name'] ?? '', 'username' => $from['username'] ?? '']);
-            $user = userRepo->findByTelegramId($from['id']);
+            $user = $userRepo->findByTelegramId($from['id']);
         }
         return $user;
-    } catch (Exception $e) { return null; }
+    } catch (Exception $e) { 
+        logMessage("getOrCreateUser Error: " . $e->getMessage());
+        return null; 
+    }
 }
 
 // Admin Logic
