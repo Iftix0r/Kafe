@@ -2,19 +2,19 @@
 require_once __DIR__ . '/Database.php';
 
 class UserRepo {
-    private PDO $db;
+    private $db;
 
     public function __construct() {
         $this->db = Database::get();
     }
 
-    public function findByTelegramId(int $telegramId): ?array {
+    public function findByTelegramId($telegramId) {
         $stmt = $this->db->prepare('SELECT * FROM users WHERE telegram_id = ?');
         $stmt->execute([$telegramId]);
         return $stmt->fetch() ?: null;
     }
 
-    public function create(array $data): int {
+    public function create(array $data) {
         // First try to find existing user
         $existing = $this->findByTelegramId($data['telegram_id']);
         
@@ -76,7 +76,7 @@ class UserRepo {
         }
     }
 
-    public function logStartCommand(int $telegramId): void {
+    public function logStartCommand($telegramId) {
         $user = $this->findByTelegramId($telegramId);
         if ($user) {
             $this->logActivity($user['id'], 'start_command', [
@@ -86,7 +86,7 @@ class UserRepo {
         }
     }
 
-    private function logActivity(int $userId, string $activityType, array $data): void {
+    private function logActivity($userId, $activityType, $data) {
         try {
             $stmt = $this->db->prepare(
                 'INSERT INTO user_activities (user_id, activity_type, activity_data) VALUES (?, ?, ?)'
@@ -97,7 +97,7 @@ class UserRepo {
         }
     }
 
-    public function getNewUsersStats(): array {
+    public function getNewUsersStats() {
         try {
             $stmt = $this->db->query('SELECT * FROM new_users_today');
             return $stmt->fetch() ?: [
@@ -117,7 +117,7 @@ class UserRepo {
         }
     }
 
-    public function getRecentNewUsers(int $limit = 10): array {
+    public function getRecentNewUsers($limit = 10) {
         try {
             $stmt = $this->db->prepare(
                 'SELECT u.*, ua.created_at as registration_time, ua.activity_data

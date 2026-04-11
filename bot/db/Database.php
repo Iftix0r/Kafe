@@ -2,9 +2,9 @@
 require_once __DIR__ . '/../config.php';
 
 class Database {
-    private static ?PDO $instance = null;
+    private static $instance = null;
 
-    public static function get(): PDO {
+    public static function get() {
         if (!self::$instance) {
             self::$instance = new PDO(
                 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8mb4',
