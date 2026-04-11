@@ -9,6 +9,11 @@ class KafeApp {
         this.categories = [];
         this.currentView = 'menu';
         this.MENU_API = 'https://olmazorgo.bigsaver.ru/bot/api/menu.php';
+        this.ORDERS_API = 'https://olmazorgo.bigsaver.ru/bot/api/orders.php';
+        
+        // Extract tg_id from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        this.tgId = urlParams.get('tg_id') || this.tg?.initDataUnsafe?.user?.id;
         
         // Load cart from localStorage
         this.loadCartFromStorage();
@@ -415,29 +420,24 @@ class KafeApp {
     }
 
     async fetchUserOrders() {
-        // Bu yerda haqiqiy API chaqiruvi bo'lishi kerak
-        // Hozircha demo ma'lumotlar qaytaradi
-        return [
-            {
-                id: 1001,
-                date: '2024-03-15',
-                status: 'completed',
-                items: [
-                    { name: 'Osh', quantity: 2, price: 25000 },
-                    { name: 'Choy', quantity: 1, price: 5000 }
-                ],
-                total: 55000
-            },
-            {
-                id: 1002,
-                date: '2024-03-14',
-                status: 'pending',
-                items: [
-                    { name: 'Manti', quantity: 1, price: 30000 }
-                ],
-                total: 30000
+        if (!this.tgId) {
+            console.warn('No tg_id found for fetching orders');
+            return [];
+        }
+
+        try {
+            const response = await fetch(`${this.ORDERS_API}?id=${this.tgId}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            
+            const result = await response.json();
+            if (result.ok && Array.isArray(result.orders)) {
+                return result.orders;
             }
-        ];
+            return [];
+        } catch (error) {
+            console.error('❌ Orders fetch error:', error);
+            return [];
+        }
     }
 
     createOrderCard(order) {
@@ -445,9 +445,12 @@ class KafeApp {
         card.className = 'order-card';
         
         const statusText = {
-            pending: 'Kutilmoqda',
-            completed: 'Tayyor',
-            cancelled: 'Bekor qilingan'
+            'new': 'Yangi',
+            'confirmed': 'Tasdiqlangan ✅',
+            'preparing': 'Tayyorlanmoqda 👨‍🍳',
+            'on_way': 'Yo\'lda 🚀',
+            'delivered': 'Yetkazildi ✅',
+            'cancelled': 'Bekor qilingan ❌'
         };
         
         card.innerHTML = `
