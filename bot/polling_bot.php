@@ -106,9 +106,9 @@ function processUpdate($update) {
         return;
     }
 
-    // Admin /start
-    logDebug("Checking admin: chatId=$chatId, adminId=" . ADMIN_TELEGRAM_ID);
-    if ($text === '/start' && (string)$chatId === (string)ADMIN_TELEGRAM_ID) {
+    // Admin /start or /admin
+    logDebug("Checking admin: chatId=$chatId, text=$text, adminId=" . ADMIN_TELEGRAM_ID);
+    if (($text === '/start' || $text === '/admin') && (string)$chatId === (string)ADMIN_TELEGRAM_ID) {
         logDebug("Admin panel triggered");
         $oRepo = new OrderRepo();
         $orders = $oRepo->getActiveOrders();

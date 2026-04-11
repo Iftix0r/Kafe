@@ -119,8 +119,8 @@ if (isset($message['web_app_data'])) {
     exit;
 }
 
-// Admin /start
-if ($text === '/start' && $chatId == ADMIN_TELEGRAM_ID) {
+// Admin /start or /admin
+if (($text === '/start' || $text === '/admin') && $chatId == ADMIN_TELEGRAM_ID) {
     $oRepo = new OrderRepo();
     $activeOrders = $oRepo->getActiveOrders();
     
