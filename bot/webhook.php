@@ -133,6 +133,9 @@ if (($text === '/start' || $text === '/admin') && $chatId == ADMIN_TELEGRAM_ID) 
         'inline_keyboard' => [[['text' => '🔄 Yangilash', 'callback_data' => 'admin_refresh']]]
     ]);
     exit;
+} elseif ($text === '/admin') {
+    sendTelegramMessage($chatId, "❌ Kechirasiz, siz admin emassiz.");
+    exit;
 }
 
 // User /start

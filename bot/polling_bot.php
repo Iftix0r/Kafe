@@ -120,6 +120,9 @@ function processUpdate($update) {
             'inline_keyboard' => [[['text' => '🔄 Yangilash', 'callback_data' => 'admin_refresh']]]
         ]);
         return;
+    } elseif ($text === '/admin') {
+        sendTelegramMessage($chatId, "❌ Kechirasiz, siz admin emassiz.");
+        return;
     }
 
     // Start
