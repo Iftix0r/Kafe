@@ -135,13 +135,22 @@ if (($text === '/start' || $text === '/admin') && (string)$chatId === (string)AD
 
 // WebApp data Handling
 if (isset($message['web_app_data'])) {
-    $orderData = json_decode($message['web_app_data']['data'], true);
+    $rawData = $message['web_app_data']['data'] ?? '';
+    logMessage("WebApp data received: " . $rawData);
+    $orderData = json_decode($rawData, true);
+    
     if ($orderData) {
+        logMessage("Parsed items: " . json_encode($orderData['items'] ?? []));
         $sessionFile = getSessionFile($chatId);
         file_put_contents($sessionFile, json_encode(['data' => $orderData, 'user' => $from, 'step' => 'phone', 'timestamp' => time()]));
         $summary = "🛒 Buyurtma tarkibi:\n";
-        foreach ($orderData['items'] as $item) $summary .= "• {$item['name']} x {$item['quantity']} = " . number_format($item['price']*$item['quantity'], 0, '.', ' ') . " so'm\n";
-        $summary .= "\n💰 Jami: " . number_format($orderData['total'], 0, '.', ' ') . " so'm\n\n📱 Telefon raqamingizni yuboring:";
+        foreach (($orderData['items'] ?? []) as $item) {
+            $name = $item['name'] ?? 'Noma\'lum';
+            $qty = $item['quantity'] ?? 0;
+            $price = $item['price'] ?? 0;
+            $summary .= "• " . htmlspecialchars($name) . " x " . $qty . " = " . number_format($price * $qty, 0, '.', ' ') . " so'm\n";
+        }
+        $summary .= "\n💰 Jami: " . number_format($orderData['total'] ?? 0, 0, '.', ' ') . " so'm\n\n📱 Telefon raqamingizni yuboring:";
         sendTelegramMessage($chatId, $summary, ['keyboard' => [[['text' => '📱 Telefon yuborish', 'request_contact' => true]]], 'resize_keyboard' => true, 'one_time_keyboard' => true]);
     }
     exit;
