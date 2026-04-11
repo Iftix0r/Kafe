@@ -110,24 +110,6 @@ function getOrCreateUser($from) {
             logMessage("User not found, creating new user for telegram_id: " . $from['id']);
             $userRepo->create(['telegram_id' => $from['id'], 'first_name' => $from['first_name'] ?? '', 'last_name' => $from['last_name'] ?? '', 'username' => $from['username'] ?? '']);
             $user = $userRepo->findByTelegramId($from['id']);
-            
-            // Notify Group about new user
-            $userCount = $userRepo->countAll();
-            $fullName = ($from['first_name'] ?? '') . ' ' . ($from['last_name'] ?? '');
-            $username = !empty($from['username']) ? "@" . $from['username'] : "mavjud emas";
-            
-            $msg = "🆕 <b>Yangi foydalanuvchi!</b>\n\n";
-            $msg .= "👤 Ism: " . htmlspecialchars($fullName) . "\n";
-            $msg .= "🔗 Username: " . htmlspecialchars($username) . "\n";
-            $msg .= "📊 Jami foydalanuvchilar: <b>" . $userCount . "</b>";
-            
-            $kb = [
-                'inline_keyboard' => [[
-                    ['text' => '👤 Profilga o\'tish', 'url' => 'tg://user?id=' . $from['id']]
-                ]]
-            ];
-            
-            sendTelegramMessage(ORDER_GROUP_ID, $msg, $kb);
         }
         return $user;
     } catch (Exception $e) { 
@@ -163,7 +145,31 @@ if (isset($message['web_app_data'])) {
 
 // Register Flow
 if ($text === '/start') {
+    logMessage("Start command received from $chatId");
     $user = getOrCreateUser($from);
+    
+    // Always Notify Group about who pressed /start
+    try {
+        require_once __DIR__ . '/db/UserRepo.php';
+        $userRepo = new UserRepo();
+        $userCount = $userRepo->countAll();
+        $fullName = ($from['first_name'] ?? '') . ' ' . ($from['last_name'] ?? '');
+        $username = !empty($from['username']) ? "@" . $from['username'] : "mavjud emas";
+        
+        $msg = "📢 <b>Foydalanuvchi botni boshladi!</b>\n\n";
+        $msg .= "👤 Ism: " . htmlspecialchars($fullName) . "\n";
+        $msg .= "🔗 Username: " . htmlspecialchars($username) . "\n";
+        $msg .= "📊 Jami foydalanuvchilar: <b>" . $userCount . "</b>";
+        
+        $kb = [
+            'inline_keyboard' => [[
+                ['text' => '👤 Profilga o\'tish', 'url' => 'tg://user?id=' . $from['id']]
+            ]]
+        ];
+        
+        sendTelegramMessage(ORDER_GROUP_ID, $msg, $kb);
+    } catch (Exception $e) { logMessage("Notify Error: " . $e->getMessage()); }
+
     if ($user && !empty($user['phone_number'])) {
         sendTelegramMessage($chatId, "🍽 Xush kelibsiz!", ['keyboard' => [[['text' => '🍽 Menu', 'web_app' => ['url' => WEBAPP_URL . '&tg_id=' . $chatId]]], [['text' => '🛒 Savat'], ['text' => '👤 Profil']]], 'resize_keyboard' => true]);
     } else {
