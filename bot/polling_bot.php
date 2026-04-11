@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/db/UserRepo.php';
+require_once __DIR__ . '/db/OrderRepo.php';
 
 // Debug logging
 function logDebug($message) {
@@ -19,329 +21,168 @@ function getSessionFile($chatId) {
 }
 
 function sendTelegramMessage($chatId, $text, $keyboard = null) {
-    $params = [
-        'chat_id' => $chatId,
-        'text' => $text,
-        'parse_mode' => 'HTML'
-    ];
-    
-    if ($keyboard) {
-        $params['reply_markup'] = json_encode($keyboard);
-    }
-    
+    $params = ['chat_id' => $chatId, 'text' => $text, 'parse_mode' => 'HTML'];
+    if ($keyboard) $params['reply_markup'] = json_encode($keyboard);
     $url = 'https://api.telegram.org/bot' . BOT_TOKEN . '/sendMessage';
     $ch = curl_init($url);
-    curl_setopt_array($ch, [
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => $params,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 10,
-    ]);
-    $result = curl_exec($ch);
-    curl_close($ch);
-    
-    return $result;
+    curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_POSTFIELDS => $params, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 10]);
+    return curl_exec($ch);
+}
+
+function answerCallbackQuery($id, $text) {
+    $url = 'https://api.telegram.org/bot' . BOT_TOKEN . '/answerCallbackQuery?callback_query_id=' . $id . '&text=' . urlencode($text);
+    return file_get_contents($url);
+}
+
+function editMessageText($chatId, $msgId, $text, $keyboard = null) {
+    $params = ['chat_id' => $chatId, 'message_id' => $msgId, 'text' => $text, 'parse_mode' => 'HTML'];
+    if ($keyboard) $params['reply_markup'] = json_encode($keyboard);
+    $url = 'https://api.telegram.org/bot' . BOT_TOKEN . '/editMessageText';
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_POSTFIELDS => $params, CURLOPT_RETURNTRANSFER => true]);
+    return curl_exec($ch);
 }
 
 function getUpdates($offset = 0) {
     $url = 'https://api.telegram.org/bot' . BOT_TOKEN . '/getUpdates';
-    $params = [
-        'offset' => $offset,
-        'timeout' => 30,
-        'limit' => 100
-    ];
-    
+    $params = ['offset' => $offset, 'timeout' => 30, 'limit' => 100];
     $ch = curl_init($url);
-    curl_setopt_array($ch, [
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => $params,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 35,
-    ]);
-    $result = curl_exec($ch);
-    curl_close($ch);
-    
-    return json_decode($result, true);
+    curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_POSTFIELDS => $params, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 35]);
+    return json_decode(curl_exec($ch), true);
 }
 
 function processUpdate($update) {
-    logDebug("Processing update: " . json_encode($update));
-    
-    $message = $update['message'] ?? null;
-    if (!$message) {
-        logDebug("No message in update");
+    // Handle Callback Query (Admin buttons)
+    if (isset($update['callback_query'])) {
+        $cb = $update['callback_query'];
+        $data = $cb['data'];
+        $chatId = $cb['message']['chat']['id'];
+        $msgId = $cb['message']['message_id'];
+        $oRepo = new OrderRepo();
+        
+        if (strpos($data, 'st_') === 0) {
+            list($prefix, $orderId, $status) = explode('_', $data);
+            $oRepo->updateStatus((int)$orderId, $status);
+            $order = $oRepo->findById((int)$orderId);
+            $statusText = ['confirmed' => 'Tasdiqlangan ✅', 'preparing' => 'Tayyorlanmoqda 👨‍🍳', 'delivered' => 'Yetkazilgan 🚀', 'cancelled' => 'Bekor qilingan ❌'];
+            $newText = $cb['message']['text'] . "\n\n➖➖➖➖➖➖\nHolat: " . ($statusText[$status] ?? $status);
+            answerCallbackQuery($cb['id'], "Holat o'zgardi");
+            editMessageText($chatId, $msgId, $newText, ['inline_keyboard' => $cb['message']['reply_markup']['inline_keyboard']]);
+            if ($order) {
+                $uRepo = new UserRepo();
+                $uData = $uRepo->db->prepare("SELECT telegram_id FROM users WHERE id = ?");
+                $uData->execute([$order['user_id']]);
+                if ($user = $uData->fetch()) sendTelegramMessage($user['telegram_id'], "🔔 Buyurtmangiz #{$orderId} holati: <b>" . ($statusText[$status] ?? $status) . "</b>");
+            }
+        } elseif (strpos($data, 'tr_') === 0) {
+            $orderId = substr($data, 3);
+            file_put_contents(__DIR__ . "/sessions/admin_state.json", json_encode(['expecting_tracking' => $orderId]));
+            answerCallbackQuery($cb['id'], "Tracking kutilmoqda");
+            sendTelegramMessage($chatId, "📍 Buyurtma #{$orderId} uchun tracking linkni yuboring:");
+        }
         return;
     }
+
+    $message = $update['message'] ?? null;
+    if (!$message) return;
 
     $chatId = $message['chat']['id'];
     $from = $message['from'];
-
-    logDebug("Chat ID: $chatId, From: " . json_encode($from));
+    $text = $message['text'] ?? '';
 
     // Handle WebApp data
     if (isset($message['web_app_data'])) {
-        logDebug("WebApp data received!");
-        
-        $webAppData = $message['web_app_data']['data'];
-        logDebug("WebApp data content: " . $webAppData);
-        
-        $orderData = json_decode($webAppData, true);
-        logDebug("Parsed order data: " . json_encode($orderData));
-        
+        $orderData = json_decode($message['web_app_data']['data'], true);
         if ($orderData && isset($orderData['items'])) {
-            // Save order to session
             $sessionFile = getSessionFile($chatId);
-            $sessionData = [
-                'data' => $orderData,
-                'user' => $from,
-                'step' => 'phone',
-                'timestamp' => time()
-            ];
-            file_put_contents($sessionFile, json_encode($sessionData));
-            logDebug("Order saved to session: " . $sessionFile);
+            file_put_contents($sessionFile, json_encode(['data' => $orderData, 'user' => $from, 'step' => 'phone', 'timestamp' => time()]));
             
-            // Build order summary
-            $summary = "📋 Buyurtma qabul qilindi!\n\n";
-            $summary .= "🛒 Buyurtma tarkibi:\n";
+            $summary = "📋 Buyurtma tarkibi:\n";
+            foreach ($orderData['items'] as $item) $summary .= "• {$item['name']} × {$item['quantity']} = " . number_format($item['price'] * $item['quantity'], 0, '.', ' ') . " so'm\n";
+            $summary .= "\n💰 Jami: " . number_format($orderData['total'], 0, '.', ' ') . " so'm\n\n📱 Telefon raqamingizni yuboring:";
             
-            foreach ($orderData['items'] as $item) {
-                $itemTotal = $item['price'] * $item['quantity'];
-                $summary .= "• {$item['name']} × {$item['quantity']} = " . number_format($itemTotal, 0, '.', ' ') . " so'm\n";
-            }
-            
-            $summary .= "\n💰 Jami: " . number_format($orderData['total'], 0, '.', ' ') . " so'm\n\n";
-            $summary .= "📱 Telefon raqamingizni yuboring:\nMasalan: +998901234567";
-            
-            // Send message
-            $response = sendTelegramMessage($chatId, $summary);
-            logDebug("Message sent, response: " . $response);
-        } else {
-            logDebug("ERROR: Invalid order data");
-            sendTelegramMessage($chatId, "❌ Buyurtma ma'lumotlari noto'g'ri");
+            sendTelegramMessage($chatId, $summary, ['keyboard' => [[['text' => '📱 Telefon yuborish', 'request_contact' => true]]], 'resize_keyboard' => true, 'one_time_keyboard' => true]);
         }
         return;
     }
 
-    // Handle /start command
-    if (isset($message['text']) && $message['text'] === '/start') {
-        logDebug("Start command received");
-        
-        $welcomeText = "🍽 Olmazor Go ga xush kelibsiz!\n\n";
-        $welcomeText .= "📱 Telefon raqamingizni yuboring:";
-        
-        $keyboard = [
-            'keyboard' => [[
-                ['text' => '📱 Telefon raqamni yuborish', 'request_contact' => true]
-            ]],
-            'resize_keyboard' => true,
-            'one_time_keyboard' => true,
-        ];
-        
-        sendTelegramMessage($chatId, $welcomeText, $keyboard);
+    // Admin /start
+    if ($text === '/start' && $chatId == ADMIN_TELEGRAM_ID) {
+        $oRepo = new OrderRepo();
+        $orders = $oRepo->getActiveOrders();
+        $msg = "👨‍💻 Admin Panel\n\nActive: " . count($orders) . "\n\n";
+        foreach (array_slice($orders, 0, 10) as $ord) $msg .= "#{$ord['id']} - {$ord['first_name']} | " . number_format($ord['total_price'], 0, '.', ' ') . " so'm | {$ord['status']}\n";
+        sendTelegramMessage($chatId, $msg, ['inline_keyboard' => [[['text' => '🔄 Refresh', 'callback_data' => 'admin_refresh']]]]);
         return;
     }
 
-    // Handle contact
+    // Start
+    if ($text === '/start') {
+        sendTelegramMessage($chatId, "🍽 Olmazor Go ga xush kelibsiz!", ['inline_keyboard' => [[['text' => '🍽 Menu', 'web_app' => ['url' => WEBAPP_URL . '&tg_id=' . $chatId]]]], 'remove_keyboard' => true]);
+        return;
+    }
+
+    // Contact
     if (isset($message['contact'])) {
-        logDebug("Contact received");
-        
         $phone = $message['contact']['phone_number'];
-        logDebug("Phone number: $phone");
-        
-        $text = "✅ Ro'yxatdan o'tdingiz!\n\n";
-        $text .= "Menuni ochish uchun tugmani bosing:";
-        
-        $keyboard = [
-            'inline_keyboard' => [[
-                ['text' => '🍽 Menuni ochish', 'web_app' => ['url' => WEBAPP_URL]]
-            ]],
-            'remove_keyboard' => true
-        ];
-        
-        sendTelegramMessage($chatId, $text, $keyboard);
+        $sessionFile = getSessionFile($chatId);
+        if (file_exists($sessionFile)) {
+            $sessionData = json_decode(file_get_contents($sessionFile), true);
+            $sessionData['phone'] = $phone;
+            $sessionData['step'] = 'address';
+            file_put_contents($sessionFile, json_encode($sessionData));
+            sendTelegramMessage($chatId, "✅ Raqam: $phone\n\n📍 Manzilni yozing yoki joylashuvingizni yuboring:", ['keyboard' => [[['text' => '📍 Joylashuv', 'request_location' => true]]], 'resize_keyboard' => true, 'one_time_keyboard' => true]);
+        }
         return;
     }
 
-    // Handle regular text (phone number, address, etc.)
-    if (isset($message['text'])) {
-        $text = $message['text'];
-        logDebug("Text message: $text");
-        
-        // Check if there's an active order session
-        $sessionFile = getSessionFile($chatId);
-        if (file_exists($sessionFile)) {
-            $sessionData = json_decode(file_get_contents($sessionFile), true);
-            logDebug("Found order session, step: " . $sessionData['step']);
-            
-            if ($sessionData['step'] === 'phone') {
-                // Validate phone number
-                $cleanPhone = preg_replace('/[^\d+]/', '', $text);
-                if (preg_match('/^(\+?998|998|8)?[0-9]{9}$/', $cleanPhone)) {
-                    logDebug("Valid phone number: $text");
-                    
-                    // Save phone to session
-                    $sessionData['phone'] = $text;
-                    $sessionData['step'] = 'address';
-                    file_put_contents($sessionFile, json_encode($sessionData));
-                    
-                    // Ask for address
-                    $keyboard = [
-                        'keyboard' => [[
-                            ['text' => '📍 Joylashuvni yuborish', 'request_location' => true]
-                        ]],
-                        'resize_keyboard' => true,
-                        'one_time_keyboard' => true,
-                    ];
-                    
-                    sendTelegramMessage($chatId, 
-                        "✅ Telefon raqam saqlandi: $text\n\n📍 Endi manzilingizni yuboring:\nMasalan: Toshkent sh., Yunusobod t., 5-mavze, 12-uy\n\nYoki joylashuvingizni yuboring 👇", 
-                        $keyboard
-                    );
-                } else {
-                    logDebug("Invalid phone number: $text");
-                    sendTelegramMessage($chatId, "❌ Telefon raqam noto'g'ri formatda.\n\n📱 Iltimos, to'g'ri formatda yuboring:\nMasalan: +998901234567 yoki 998901234567");
-                }
-            } elseif ($sessionData['step'] === 'address') {
-                logDebug("Address received: $text");
-                
-                // Save address to session
-                $sessionData['address'] = $text;
-                $sessionData['step'] = 'comment';
-                file_put_contents($sessionFile, json_encode($sessionData));
-                
-                // Ask for comment
-                $keyboard = [
-                    'keyboard' => [[
-                        ['text' => 'Yo\'q']
-                    ]],
-                    'resize_keyboard' => true,
-                    'one_time_keyboard' => true,
-                ];
-                
-                sendTelegramMessage($chatId, 
-                    "✅ Manzil saqlandi: $text\n\n💬 Qo'shimcha izoh bor mi?\nMasalan: 3-qavat, 12-xonadon. Kamroq tuz qo'shing.\n\nIzoh yo'q bo'lsa \"Yo'q\" deb yozing.",
-                    $keyboard
-                );
-            } elseif ($sessionData['step'] === 'comment') {
-                logDebug("Comment received: $text");
-                
-                $comment = (strtolower($text) === 'yo\'q' || strtolower($text) === 'yoq') ? '' : $text;
-                
-                // Build final summary
-                $orderId = rand(1000, 9999);
-                
-                $finalSummary = "📋 Buyurtma #{$orderId}\n\n";
-                $finalSummary .= "👤 Mijoz: {$sessionData['user']['first_name']} {$sessionData['user']['last_name']}\n";
-                $finalSummary .= "📱 Telefon: {$sessionData['phone']}\n";
-                $finalSummary .= "📍 Manzil: {$sessionData['address']}\n\n";
-                $finalSummary .= "🛒 Buyurtma tarkibi:\n";
-                
-                foreach ($sessionData['data']['items'] as $item) {
-                    $itemTotal = $item['price'] * $item['quantity'];
-                    $finalSummary .= "• {$item['name']} × {$item['quantity']} = " . number_format($itemTotal, 0, '.', ' ') . " so'm\n";
-                }
-                
-                $finalSummary .= "\n💰 Jami: " . number_format($sessionData['data']['total'], 0, '.', ' ') . " so'm";
-                
-                if (!empty($comment)) {
-                    $finalSummary .= "\n💬 Izoh: $comment";
-                }
-                
-                $finalSummary .= "\n⏰ Vaqt: " . date('d.m.Y H:i');
-                
-                // Send to customer
-                sendTelegramMessage($chatId, 
-                    "🎉 Buyurtmangiz muvaffaqiyatli qabul qilindi!\n\n" . 
-                    $finalSummary . 
-                    "\n\n⏰ Tayyorlanish vaqti: 15-20 daqiqa\n📞 Aloqa: +998 90 123 45 67"
-                );
-                
-                // Send to admin
-                sendTelegramMessage(ADMIN_TELEGRAM_ID, "🆕 YANGI BUYURTMA #{$orderId}\n\n" . $finalSummary);
-                
-                // Clear session
-                unlink($sessionFile);
-                logDebug("Order completed and session cleared");
-            }
-        } else {
-            // No active session - treat as regular message
-            logDebug("No active session, treating as regular message");
-            sendTelegramMessage($chatId, "Buyurtma berish uchun /start buyrug'ini yuboring va menyuni oching.");
+    // Address/Comment
+    $sessionFile = getSessionFile($chatId);
+    if (file_exists($sessionFile)) {
+        $sessionData = json_decode(file_get_contents($sessionFile), true);
+        if ($sessionData['step'] === 'address') {
+            $address = isset($message['location']) ? "📍 GPS: {$message['location']['latitude']}, {$message['location']['longitude']}" : $text;
+            $sessionData['address'] = $address;
+            $sessionData['step'] = 'comment';
+            file_put_contents($sessionFile, json_encode($sessionData));
+            sendTelegramMessage($chatId, "✅ Manzil: $address\n\n💬 Izoh (ixtiyoriy, yo'q bo'lsa \"Yo'q\"):");
+        } elseif ($sessionData['step'] === 'comment') {
+            $comment = (strtolower($text) === 'yo\'q' || strtolower($text) === 'yoq') ? '' : $text;
+            $uRepo = new UserRepo(); $oRepo = new OrderRepo();
+            $dbUid = $uRepo->create(['telegram_id' => $chatId, 'first_name' => $from['first_name'], 'last_name' => $from['last_name'] ?? '', 'username' => $from['username'] ?? '', 'phone_number' => $sessionData['phone']]);
+            $orderId = $oRepo->create($dbUid, (float)$sessionData['data']['total'], $comment, $sessionData['phone'], $sessionData['address']);
+            $oRepo->addItems($orderId, $sessionData['data']['items']);
+            $summary = "✅ #{$orderId} qabul qilindi! " . number_format($sessionData['data']['total'], 0, '.', ' ') . " so'm";
+            sendTelegramMessage($chatId, "🎉 Rahmat! " . $summary);
+            $adminKb = ['inline_keyboard' => [[['text' => '✅ Tasdiqlash', 'callback_data' => "st_{$orderId}_confirmed"], ['text' => '👨‍🍳 Tayyorlash', 'callback_data' => "st_{$orderId}_preparing"]], [['text' => '🚀 Yetkazish', 'callback_data' => "st_{$orderId}_delivered"], ['text' => '📍 Tracking', 'callback_data' => "tr_{$orderId}"]]]];
+            sendTelegramMessage(ADMIN_TELEGRAM_ID, "🆕 BUYURTMA #{$orderId}\n" . $summary, $adminKb);
+            unlink($sessionFile);
         }
-    }
-
-    // Handle location
-    if (isset($message['location'])) {
-        logDebug("Location received");
-        
-        $lat = $message['location']['latitude'];
-        $lon = $message['location']['longitude'];
-        $address = "📍 GPS: $lat, $lon";
-        
-        // Check if there's an active order session
-        $sessionFile = getSessionFile($chatId);
-        if (file_exists($sessionFile)) {
-            $sessionData = json_decode(file_get_contents($sessionFile), true);
-            
-            if ($sessionData['step'] === 'address') {
-                logDebug("Location saved as address: $address");
-                
-                // Save address to session
-                $sessionData['address'] = $address;
-                $sessionData['step'] = 'comment';
-                file_put_contents($sessionFile, json_encode($sessionData));
-                
-                // Ask for comment
-                $keyboard = [
-                    'keyboard' => [[
-                        ['text' => 'Yo\'q']
-                    ]],
-                    'resize_keyboard' => true,
-                    'one_time_keyboard' => true,
-                ];
-                
-                sendTelegramMessage($chatId, 
-                    "✅ Manzil saqlandi: $address\n\n💬 Qo'shimcha izoh bor mi?\nMasalan: 3-qavat, 12-xonadon. Kamroq tuz qo'shing.\n\nIzoh yo'q bo'lsa \"Yo'q\" deb yozing.",
-                    $keyboard
-                );
+    } elseif ($chatId == ADMIN_TELEGRAM_ID) {
+        $adminStateFile = __DIR__ . "/sessions/admin_state.json";
+        if (file_exists($adminStateFile)) {
+            $state = json_decode(file_get_contents($adminStateFile), true);
+            if (isset($state['expecting_tracking'])) {
+                $oRepo = new OrderRepo();
+                $oRepo->updateTracking((int)$state['expecting_tracking'], $text);
+                unlink($adminStateFile);
+                sendTelegramMessage($chatId, "✅ Tracking saqlandi!");
             }
         }
     }
 }
 
-// Main polling loop
-logDebug("=== Polling Bot Started ===");
-
+logDebug("=== Polling Started ===");
 $offset = 0;
-
 while (true) {
     try {
-        logDebug("Getting updates with offset: $offset");
-        
-        $response = getUpdates($offset);
-        
-        if (!$response || !$response['ok']) {
-            logDebug("ERROR: Failed to get updates: " . json_encode($response));
-            sleep(5);
-            continue;
+        $resp = getUpdates($offset);
+        if ($resp && $resp['ok']) {
+            foreach ($resp['result'] as $upd) {
+                $offset = $upd['update_id'] + 1;
+                processUpdate($upd);
+            }
         }
-        
-        $updates = $response['result'];
-        logDebug("Received " . count($updates) . " updates");
-        
-        foreach ($updates as $update) {
-            $offset = $update['update_id'] + 1;
-            processUpdate($update);
-        }
-        
-        if (empty($updates)) {
-            // No new updates, wait a bit
-            sleep(1);
-        }
-        
-    } catch (Exception $e) {
-        logDebug("ERROR: " . $e->getMessage());
-        sleep(5);
-    }
+        if (empty($resp['result'])) sleep(1);
+    } catch (Exception $e) { logDebug("ERR: " . $e->getMessage()); sleep(5); }
 }
-?>

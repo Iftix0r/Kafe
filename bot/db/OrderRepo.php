@@ -21,7 +21,28 @@ class OrderRepo {
             'INSERT INTO order_items (order_id, menu_item_id, quantity, price) VALUES (?, ?, ?, ?)'
         );
         foreach ($items as $item) {
-            $stmt->execute([$orderId, $item['menu_item_id'], $item['quantity'], $item['price']]);
+            $stmt->execute([$orderId, $item['menu_item_id'] ?? $item['id'], $item['quantity'], $item['price']]);
         }
+    }
+
+    public function findById(int $id): ?array {
+        $stmt = $this->db->prepare('SELECT * FROM orders WHERE id = ?');
+        $stmt->execute([$id]);
+        return $stmt->fetch() ?: null;
+    }
+
+    public function updateStatus(int $id, string $status): void {
+        $stmt = $this->db->prepare('UPDATE orders SET status = ? WHERE id = ?');
+        $stmt->execute([$status, $id]);
+    }
+
+    public function updateTracking(int $id, string $link): void {
+        $stmt = $this->db->prepare('UPDATE orders SET tracking_link = ? WHERE id = ?');
+        $stmt->execute([$link, $id]);
+    }
+
+    public function getActiveOrders(): array {
+        $stmt = $this->db->query("SELECT o.*, u.first_name, u.last_name FROM orders o JOIN users u ON u.id = o.user_id WHERE o.status NOT IN ('delivered', 'cancelled') ORDER BY o.id DESC");
+        return $stmt->fetchAll();
     }
 }
