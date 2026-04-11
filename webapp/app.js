@@ -544,13 +544,14 @@ class KafeApp {
     }
 }
 
+    formatPrice(n) {
+        return Number(n).toLocaleString('uz-UZ').replace(/,/g, ' ');
+    }
+}
+
 // Global initialization
 let app;
 window.addEventListener('DOMContentLoaded', () => {
     app = new KafeApp();
-    // Expose app globally for onclick handlers
     window.app = app;
 });
-    formatPrice(n) {
-        return Number(n).toLocaleString('uz-UZ').replace(/,/g, ' ');
-    }
