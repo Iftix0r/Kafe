@@ -9,11 +9,27 @@ class OrderRepo {
     }
 
     public function create($userId, $total, $comment, $phone = '', $address = '') {
-        $stmt = $this->db->prepare(
-            'INSERT INTO orders (user_id, total_price, comment, phone, address) VALUES (?, ?, ?, ?, ?)'
-        );
-        $stmt->execute([$userId, $total, $comment, $phone, $address]);
-        return (int)$this->db->lastInsertId();
+        try {
+            // First try inserting with all fields
+            $stmt = $this->db->prepare(
+                'INSERT INTO orders (user_id, total_price, comment, phone, address) VALUES (?, ?, ?, ?, ?)'
+            );
+            $stmt->execute([$userId, $total, $comment, $phone, $address]);
+            return (int)$this->db->lastInsertId();
+        } catch (Exception $e) {
+            // If it fails (maybe phone/address columns missing), try basic insert
+            $stmt = $this->db->prepare(
+                'INSERT INTO orders (user_id, total_price, comment) VALUES (?, ?, ?)'
+            );
+            $stmt->execute([$userId, $total, $comment]);
+            $orderId = (int)$this->db->lastInsertId();
+            
+            // Try updating phone/address separately (so it doesn't crash the whole process)
+            try { $this->db->prepare("UPDATE orders SET phone = ? WHERE id = ?")->execute([$phone, $orderId]); } catch(Exception $ex) {}
+            try { $this->db->prepare("UPDATE orders SET address = ? WHERE id = ?")->execute([$address, $orderId]); } catch(Exception $ex) {}
+            
+            return $orderId;
+        }
     }
 
     public function addItems($orderId, array $items) {

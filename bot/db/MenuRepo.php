@@ -22,4 +22,10 @@ class MenuRepo {
         }
         return $categories;
     }
+
+    public function getItemById($id) {
+        $stmt = $this->db->prepare('SELECT * FROM menu_items WHERE id = ?');
+        $stmt->execute([$id]);
+        return $stmt->fetch() ?: null;
+    }
 }

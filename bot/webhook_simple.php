@@ -139,12 +139,23 @@ if (isset($message['web_app_data'])) {
     logMessage("WebApp data received: " . $rawData);
     $orderData = json_decode($rawData, true);
     
-    if ($orderData) {
-        logMessage("Parsed items: " . json_encode($orderData['items'] ?? []));
+    if ($orderData && isset($orderData['items'])) {
+        require_once __DIR__ . '/db/MenuRepo.php';
+        $mRepo = new MenuRepo();
+        
+        // Enrich items with names from DB if missing
+        foreach ($orderData['items'] as &$item) {
+            if (empty($item['name']) || $item['name'] == 'Noma\'lum') {
+                $dbItem = $mRepo->getItemById($item['menu_item_id'] ?? ($item['id'] ?? 0));
+                if ($dbItem) $item['name'] = $dbItem['name'];
+            }
+        }
+        
+        logMessage("Enriched items: " . json_encode($orderData['items']));
         $sessionFile = getSessionFile($chatId);
         file_put_contents($sessionFile, json_encode(['data' => $orderData, 'user' => $from, 'step' => 'phone', 'timestamp' => time()]));
         $summary = "🛒 Buyurtma tarkibi:\n";
-        foreach (($orderData['items'] ?? []) as $item) {
+        foreach ($orderData['items'] as $item) {
             $name = $item['name'] ?? 'Noma\'lum';
             $qty = $item['quantity'] ?? 0;
             $price = $item['price'] ?? 0;
