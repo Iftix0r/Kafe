@@ -37,8 +37,45 @@ if (!$update) {
 
 $message = $update['message'] ?? null;
 if (!$message) {
-    logMessage("No message in update. Keys: " . implode(', ', array_keys($update)));
-    // Check for callback_query or other update types
+    if (isset($update['callback_query'])) {
+        $cb = $update['callback_query'];
+        $data = $cb['data'];
+        $chatId = $cb['message']['chat']['id'];
+        $msgId = $cb['message']['message_id'];
+        
+        logMessage("Callback received in webhook_simple: $data");
+        
+        try {
+            require_once __DIR__ . '/db/OrderRepo.php';
+            $oRepo = new OrderRepo();
+            
+            if (strpos($data, 'st_') === 0) {
+                list($prefix, $orderId, $status) = explode('_', $data);
+                $oRepo->updateStatus((int)$orderId, $status);
+                
+                $statusText = [
+                    'confirmed' => 'Tasdiqlangan ✅',
+                    'preparing' => 'Tayyorlanmoqda 👨‍🍳',
+                    'delivered' => 'Yetkazilgan 🚀',
+                    'cancelled' => 'Bekor qilingan ❌'
+                ];
+                
+                $newText = $cb['message']['text'] . "\n\n➖➖➖➖➖➖\nHolat: " . ($statusText[$status] ?? $status);
+                
+                // Update message
+                $url = 'https://api.telegram.org/bot' . BOT_TOKEN . '/editMessageText';
+                $params = [
+                    'chat_id' => $chatId,
+                    'message_id' => $msgId,
+                    'text' => $newText,
+                    'reply_markup' => json_encode($cb['message']['reply_markup'])
+                ];
+                file_get_contents($url . '?' . http_build_query($params));
+            }
+        } catch (Exception $e) {
+            logMessage("Callback error: " . $e->getMessage());
+        }
+    }
     exit;
 }
 
@@ -148,9 +185,40 @@ if (isset($message['web_app_data'])) {
 }
 
 // ============================================================
+// Handle Admin Commands
+// ============================================================
+$text = $message['text'] ?? '';
+if (($text === '/start' || $text === '/admin') && (string)$chatId === (string)ADMIN_TELEGRAM_ID) {
+    logMessage("Admin panel triggered in webhook_simple.php");
+    try {
+        require_once __DIR__ . '/db/OrderRepo.php';
+        $oRepo = new OrderRepo();
+        $orders = $oRepo->getActiveOrders();
+        
+        $msg = "👨‍💻 Admin Panel\n\nFaol buyurtmalar: " . count($orders) . "\n\n";
+        foreach (array_slice($orders, 0, 10) as $ord) {
+            $msg .= "#{$ord['id']} - {$ord['first_name']} | " . number_format($ord['total_price'], 0, '.', ' ') . " so'm | {$ord['status']}\n";
+        }
+        
+        // Use inline keyboard for admin panel updates
+        $keyboard = [
+            'inline_keyboard' => [[['text' => '🔄 Yangilash', 'callback_data' => 'admin_refresh']]]
+        ];
+        
+        sendTelegramMessage($chatId, $msg, $keyboard);
+        exit;
+    } catch (Exception $e) {
+        logMessage("ERROR in admin panel: " . $e->getMessage());
+    }
+} elseif ($text === '/admin') {
+    sendTelegramMessage($chatId, "❌ Kechirasiz, siz admin emassiz.");
+    exit;
+}
+
+// ============================================================
 // Handle /start command
 // ============================================================
-if (isset($message['text']) && $message['text'] === '/start') {
+if ($text === '/start') {
     logMessage("Start command received");
     
     // Create or update user
