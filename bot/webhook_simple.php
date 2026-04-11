@@ -225,16 +225,27 @@ if (file_exists($sessionFile)) {
                 
                 sendTelegramMessage($chatId, "🎉 Buyurtma #$orderId qabul qilindi!");
                 
+                // Build Item List for Group
+                $itemsList = "";
+                foreach ($sessionData['data']['items'] as $item) {
+                    $itemsList .= "• " . ($item['name'] ?? 'Noma\'lum') . " x " . ($item['quantity'] ?? 1) . "\n";
+                }
+
                 $groupKb = ['inline_keyboard' => [
                     [['text' => '✅ Tasdiqlash', 'callback_data' => "st_{$orderId}_confirmed"], ['text' => '👨‍🍳 Tayyorlash', 'callback_data' => "st_{$orderId}_preparing"]],
                     [['text' => '🚀 Yo\'lda', 'callback_data' => "st_{$orderId}_on_way"], ['text' => '✅ Yetkazildi', 'callback_data' => "st_{$orderId}_delivered"]],
                     [['text' => '❌ Bekor qilish', 'callback_data' => "st_{$orderId}_cancelled"], ['text' => '📍 Tracking', 'callback_data' => "tr_{$orderId}"]]
                 ]];
                 
-                $groupMsg = "🆕 YANGI BUYURTMA #$orderId\n👤 Mijoz: " . ($from['first_name'] ?? 'Noma\'lum') . "\n📱 Tel: {$sessionData['phone']}\n📍 Manzil: {$sessionData['address']}\n💰 Jami: " . number_format($sessionData['data']['total'], 0, '.', ' ') . " so'm";
+                $groupMsg = "🆕 <b>YANGI BUYURTMA #$orderId</b>\n\n";
+                $groupMsg .= "👤 Mijoz: <b>" . ($from['first_name'] ?? 'Noma\'lum') . "</b>\n";
+                $groupMsg .= "📱 Tel: <code>{$sessionData['phone']}</code>\n";
+                $groupMsg .= "📍 Manzil: <i>{$sessionData['address']}</i>\n\n";
+                $groupMsg .= "🛒 <b>Tarkibi:</b>\n$itemsList\n";
+                $groupMsg .= "💰 Jami: <b>" . number_format($sessionData['data']['total'], 0, '.', ' ') . " so'm</b>";
                 
                 $res = sendTelegramMessage(ORDER_GROUP_ID, $groupMsg, $groupKb);
-                logMessage("Group send result: $res");
+                logMessage("Group send result to " . ORDER_GROUP_ID . ": " . $res);
                 
                 unlink($sessionFile);
             } catch (Exception $e) {
