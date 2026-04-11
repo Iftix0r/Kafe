@@ -167,10 +167,12 @@ $sessionFile = getSessionFile($chatId);
 if (file_exists($sessionFile)) {
     $sessionData = json_decode(file_get_contents($sessionFile), true);
     if ($sessionData['step'] === 'phone') {
+        logMessage("Saving phone for $chatId: $text");
         $sessionData['phone'] = $text; $sessionData['step'] = 'address';
         file_put_contents($sessionFile, json_encode($sessionData));
         sendTelegramMessage($chatId, "📍 Endi manzilingizni yuboring:", ['keyboard' => [[['text' => '📍 Joylashuv', 'request_location' => true]]], 'resize_keyboard' => true]);
     } elseif ($sessionData['step'] === 'address') {
+        logMessage("Saving address for $chatId: $text");
         $address = isset($message['location']) ? "📍 GPS: {$message['location']['latitude']}, {$message['location']['longitude']}" : $text;
         $sessionData['address'] = $address; $sessionData['step'] = 'confirm';
         file_put_contents($sessionFile, json_encode($sessionData));
@@ -178,23 +180,44 @@ if (file_exists($sessionFile)) {
         sendTelegramMessage($chatId, $summary, ['keyboard' => [[['text' => '✅ Tasdiqlash']], [['text' => '❌ Bekor qilish']]], 'resize_keyboard' => true]);
     } elseif ($sessionData['step'] === 'confirm') {
         if ($text === '✅ Tasdiqlash') {
-            require_once __DIR__ . '/db/OrderRepo.php';
-            $oRepo = new OrderRepo();
-            $uRepo = new UserRepo();
-            $user = $uRepo->findByTelegramId($chatId);
-            $orderId = $oRepo->create($user['id'], $sessionData['data']['total'], '', $sessionData['phone'], $sessionData['address']);
-            $oRepo->addItems($orderId, $sessionData['data']['items']);
-            
-            sendTelegramMessage($chatId, "🎉 Buyurtma #$orderId qabul qilindi!");
-            
-            $groupKb = ['inline_keyboard' => [
-                [['text' => '✅ Tasdiqlash', 'callback_data' => "st_{$orderId}_confirmed"], ['text' => '👨‍🍳 Tayyorlash', 'callback_data' => "st_{$orderId}_preparing"]],
-                [['text' => '🚀 Yo\'lda', 'callback_data' => "st_{$orderId}_on_way"], ['text' => '✅ Yetkazildi', 'callback_data' => "st_{$orderId}_delivered"]],
-                [['text' => '❌ Bekor qilish', 'callback_data' => "st_{$orderId}_cancelled"], ['text' => '📍 Tracking', 'callback_data' => "tr_{$orderId}"]]
-            ]];
-            sendTelegramMessage(ORDER_GROUP_ID, "🆕 YANGI BUYURTMA #$orderId\n👤 Mijoz: {$from['first_name']}\n📱 Tel: {$sessionData['phone']}\n📍 Manzil: {$sessionData['address']}\n💰 Jami: " . number_format($sessionData['data']['total'], 0, '.', ' ') . " so'm", $groupKb);
-            unlink($sessionFile);
+            logMessage("Order confirmation received for $chatId");
+            try {
+                require_once __DIR__ . '/db/OrderRepo.php';
+                require_once __DIR__ . '/db/UserRepo.php';
+                $oRepo = new OrderRepo();
+                $uRepo = new UserRepo();
+                
+                $user = $uRepo->findByTelegramId($chatId);
+                if (!$user) {
+                    logMessage("User not found in DB during confirm, creating...");
+                    $uId = $uRepo->create(['telegram_id' => $chatId, 'first_name' => $from['first_name'] ?? 'Mijoz']);
+                    $user = ['id' => $uId];
+                }
+                
+                $orderId = $oRepo->create($user['id'], $sessionData['data']['total'], '', $sessionData['phone'], $sessionData['address']);
+                $oRepo->addItems($orderId, $sessionData['data']['items']);
+                logMessage("Order #$orderId created in DB");
+                
+                sendTelegramMessage($chatId, "🎉 Buyurtma #$orderId qabul qilindi!");
+                
+                $groupKb = ['inline_keyboard' => [
+                    [['text' => '✅ Tasdiqlash', 'callback_data' => "st_{$orderId}_confirmed"], ['text' => '👨‍🍳 Tayyorlash', 'callback_data' => "st_{$orderId}_preparing"]],
+                    [['text' => '🚀 Yo\'lda', 'callback_data' => "st_{$orderId}_on_way"], ['text' => '✅ Yetkazildi', 'callback_data' => "st_{$orderId}_delivered"]],
+                    [['text' => '❌ Bekor qilish', 'callback_data' => "st_{$orderId}_cancelled"], ['text' => '📍 Tracking', 'callback_data' => "tr_{$orderId}"]]
+                ]];
+                
+                $groupMsg = "🆕 YANGI BUYURTMA #$orderId\n👤 Mijoz: " . ($from['first_name'] ?? 'Noma\'lum') . "\n📱 Tel: {$sessionData['phone']}\n📍 Manzil: {$sessionData['address']}\n💰 Jami: " . number_format($sessionData['data']['total'], 0, '.', ' ') . " so'm";
+                
+                $res = sendTelegramMessage(ORDER_GROUP_ID, $groupMsg, $groupKb);
+                logMessage("Group send result: $res");
+                
+                unlink($sessionFile);
+            } catch (Exception $e) {
+                logMessage("Order Creation ERROR: " . $e->getMessage());
+                sendTelegramMessage($chatId, "❌ Buyurtma saqlashda xatolik yuz berdi. Iltimos qayta urinib ko'ring.");
+            }
         } else {
+            logMessage("Order cancelled for $chatId");
             unlink($sessionFile);
             sendTelegramMessage($chatId, "❌ Bekor qilindi.");
         }
