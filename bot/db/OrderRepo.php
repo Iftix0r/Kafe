@@ -33,11 +33,19 @@ class OrderRepo {
     }
 
     public function addItems($orderId, array $items) {
+        if (empty($items)) return;
+        
         $stmt = $this->db->prepare(
             'INSERT INTO order_items (order_id, menu_item_id, quantity, price) VALUES (?, ?, ?, ?)'
         );
         foreach ($items as $item) {
-            $stmt->execute([$orderId, $item['menu_item_id'] ?? $item['id'], $item['quantity'], $item['price']]);
+            $itemId = $item['menu_item_id'] ?? ($item['id'] ?? 0);
+            $qty = (int)($item['quantity'] ?? 1);
+            $price = (float)($item['price'] ?? 0);
+            
+            if ($itemId > 0) {
+                $stmt->execute([$orderId, $itemId, $qty, $price]);
+            }
         }
     }
 

@@ -16,7 +16,7 @@ function logMessage($message) {
 function getSessionFile($chatId) {
     $sessionsDir = __DIR__ . "/sessions";
     if (!is_dir($sessionsDir)) {
-        mkdir($sessionsDir, 0755, true);
+        @mkdir($sessionsDir, 0777, true);
     }
     return $sessionsDir . "/order_session_{$chatId}.json";
 }
@@ -240,12 +240,31 @@ if (file_exists($sessionFile)) {
                 $user = $uRepo->findByTelegramId($chatId);
                 if (!$user) {
                     logMessage("User not found in DB during confirm, creating...");
-                    $uId = $uRepo->create(['telegram_id' => $chatId, 'first_name' => $from['first_name'] ?? 'Mijoz']);
+                    $uId = $uRepo->create([
+                        'telegram_id' => $chatId, 
+                        'first_name' => $from['first_name'] ?? 'Mijoz',
+                        'last_name' => $from['last_name'] ?? '',
+                        'username' => $from['username'] ?? ''
+                    ]);
                     $user = ['id' => $uId];
                 }
                 
-                $orderId = $oRepo->create($user['id'], $sessionData['data']['total'], '', $sessionData['phone'], $sessionData['address']);
-                $oRepo->addItems($orderId, $sessionData['data']['items']);
+                $total = (float)($sessionData['data']['total'] ?? 0);
+                $comment = $sessionData['data']['comment'] ?? '';
+                $items = $sessionData['data']['items'] ?? [];
+                
+                if (empty($items)) {
+                    throw new Exception("Savat bo'sh (items missing in session)");
+                }
+
+                logMessage("Creating order for user ID: {$user['id']}, Total: $total");
+                $orderId = $oRepo->create($user['id'], $total, $comment, $sessionData['phone'] ?? '', $sessionData['address'] ?? '');
+                
+                if (!$orderId) {
+                    throw new Exception("Order could not be created (ID is 0)");
+                }
+                
+                $oRepo->addItems($orderId, $items);
                 logMessage("Order #$orderId created in DB");
                 
                 sendTelegramMessage($chatId, "🎉 Buyurtma #$orderId qabul qilindi!");
