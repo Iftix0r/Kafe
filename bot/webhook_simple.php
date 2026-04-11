@@ -107,8 +107,27 @@ function getOrCreateUser($from) {
         $userRepo = new UserRepo();
         $user = $userRepo->findByTelegramId($from['id']);
         if (!$user) {
+            logMessage("User not found, creating new user for telegram_id: " . $from['id']);
             $userRepo->create(['telegram_id' => $from['id'], 'first_name' => $from['first_name'] ?? '', 'last_name' => $from['last_name'] ?? '', 'username' => $from['username'] ?? '']);
             $user = $userRepo->findByTelegramId($from['id']);
+            
+            // Notify Group about new user
+            $userCount = $userRepo->countAll();
+            $fullName = ($from['first_name'] ?? '') . ' ' . ($from['last_name'] ?? '');
+            $username = !empty($from['username']) ? "@" . $from['username'] : "mavjud emas";
+            
+            $msg = "🆕 <b>Yangi foydalanuvchi!</b>\n\n";
+            $msg .= "👤 Ism: " . htmlspecialchars($fullName) . "\n";
+            $msg .= "🔗 Username: " . htmlspecialchars($username) . "\n";
+            $msg .= "📊 Jami foydalanuvchilar: <b>" . $userCount . "</b>";
+            
+            $kb = [
+                'inline_keyboard' => [[
+                    ['text' => '👤 Profilga o\'tish', 'url' => 'tg://user?id=' . $from['id']]
+                ]]
+            ];
+            
+            sendTelegramMessage(ORDER_GROUP_ID, $msg, $kb);
         }
         return $user;
     } catch (Exception $e) { 

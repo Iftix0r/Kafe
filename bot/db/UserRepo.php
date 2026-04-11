@@ -134,4 +134,12 @@ class UserRepo {
             return [];
         }
     }
+
+    public function countAll() {
+        try {
+            return (int)$this->db->query('SELECT COUNT(*) FROM users')->fetchColumn();
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
 }
