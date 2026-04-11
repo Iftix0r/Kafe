@@ -327,7 +327,7 @@ $phpTgId = $_GET['tg_id'] ?? '';
                     }
                 } catch (error) {
                     console.error('Buyurtmalarni yuklashda xato:', error);
-                    ordersList.innerHTML = '<div style="text-align:center;padding:20px;color:red">Buyurtmalarni yuklab bo\\'lmadi</div>';
+                    ordersList.innerHTML = "<div style='text-align:center;padding:20px;color:red'>Buyurtmalarni yuklab bo'lmadi</div>";
                 }
             }
             async sync(isManual=false) {
