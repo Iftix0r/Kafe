@@ -92,6 +92,10 @@ if (!$message) {
                 sendTelegramMessage($chatId, "📍 Buyurtma #{$orderId} uchun tracking havolasini yuboring:");
             }
         } catch (Exception $e) { logMessage("CB Error: " . $e->getMessage()); }
+        
+        // Always answer callback query to stop loading spinner
+        $url = 'https://api.telegram.org/bot' . BOT_TOKEN . '/answerCallbackQuery';
+        file_get_contents($url . '?' . http_build_query(['callback_query_id' => $cb['id']]));
     }
     exit;
 }
@@ -178,24 +182,25 @@ if ($text === '/start') {
     exit;
 }
 
-// Contact handle
-if (isset($message['contact'])) {
-    $phone = $message['contact']['phone_number'];
-    require_once __DIR__ . '/db/UserRepo.php';
-    (new UserRepo())->create(['telegram_id' => $from['id'], 'first_name' => $from['first_name'], 'phone_number' => $phone]);
-    sendTelegramMessage($chatId, "✅ Tasdiqlandi!", ['keyboard' => [[['text' => '🍽 Menu', 'web_app' => ['url' => WEBAPP_URL . '&tg_id=' . $chatId]]]], 'resize_keyboard' => true]);
-    exit;
-}
-
 // Session steps
 $sessionFile = getSessionFile($chatId);
 if (file_exists($sessionFile)) {
     $sessionData = json_decode(file_get_contents($sessionFile), true);
+    
     if ($sessionData['step'] === 'phone') {
-        logMessage("Saving phone for $chatId: $text");
-        $sessionData['phone'] = $text; $sessionData['step'] = 'address';
+        $phone = isset($message['contact']) ? $message['contact']['phone_number'] : $text;
+        logMessage("Saving phone for $chatId: $phone");
+        
+        // Also update user profile with phone
+        try {
+            require_once __DIR__ . '/db/UserRepo.php';
+            (new UserRepo())->create(['telegram_id' => $from['id'], 'first_name' => $from['first_name'], 'phone_number' => $phone]);
+        } catch (Exception $e) {}
+
+        $sessionData['phone'] = $phone; $sessionData['step'] = 'address';
         file_put_contents($sessionFile, json_encode($sessionData));
-        sendTelegramMessage($chatId, "📍 Endi manzilingizni yuboring:", ['keyboard' => [[['text' => '📍 Joylashuv', 'request_location' => true]]], 'resize_keyboard' => true]);
+        sendTelegramMessage($chatId, "✅ Raqam saqlandi: $phone\n\n📍 Endi manzilingizni yuboring:", ['keyboard' => [[['text' => '📍 Joylashuv', 'request_location' => true]]], 'resize_keyboard' => true]);
+        exit;
     } elseif ($sessionData['step'] === 'address') {
         logMessage("Saving address for $chatId: $text");
         $address = isset($message['location']) ? "📍 GPS: {$message['location']['latitude']}, {$message['location']['longitude']}" : $text;
