@@ -6,3 +6,4 @@ define('DB_HOST', 'localhost');
 define('DB_NAME', 'olmazorgo');
 define('DB_USER', 'olmazorgo');
 define('DB_PASS', 'Iftixor2006');
+define('ORDER_GROUP_ID', '-5232547011');
