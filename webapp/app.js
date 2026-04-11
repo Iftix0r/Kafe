@@ -542,7 +542,6 @@ class KafeApp {
         // Update all item displays
         Object.keys(this.cart).forEach(id => this.updateItemDisplay(id));
     }
-}
 
     formatPrice(n) {
         return Number(n).toLocaleString('uz-UZ').replace(/,/g, ' ');
