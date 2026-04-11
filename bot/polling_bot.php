@@ -107,23 +107,34 @@ function processUpdate($update) {
     }
 
     // Admin /start
-    if ($text === '/start' && $chatId == ADMIN_TELEGRAM_ID) {
+    logDebug("Checking admin: chatId=$chatId, adminId=" . ADMIN_TELEGRAM_ID);
+    if ($text === '/start' && (string)$chatId === (string)ADMIN_TELEGRAM_ID) {
+        logDebug("Admin panel triggered");
         $oRepo = new OrderRepo();
         $orders = $oRepo->getActiveOrders();
-        $msg = "👨‍💻 Admin Panel\n\nActive: " . count($orders) . "\n\n";
-        foreach (array_slice($orders, 0, 10) as $ord) $msg .= "#{$ord['id']} - {$ord['first_name']} | " . number_format($ord['total_price'], 0, '.', ' ') . " so'm | {$ord['status']}\n";
-        sendTelegramMessage($chatId, $msg, ['inline_keyboard' => [[['text' => '🔄 Refresh', 'callback_data' => 'admin_refresh']]]]);
+        $msg = "👨‍💻 Admin Panel\n\nFaol buyurtmalar: " . count($orders) . "\n\n";
+        foreach (array_slice($orders, 0, 10) as $ord) {
+            $msg .= "#{$ord['id']} - {$ord['first_name']} | " . number_format($ord['total_price'], 0, '.', ' ') . " so'm | {$ord['status']}\n";
+        }
+        sendTelegramMessage($chatId, $msg, [
+            'inline_keyboard' => [[['text' => '🔄 Yangilash', 'callback_data' => 'admin_refresh']]]
+        ]);
         return;
     }
 
     // Start
     if ($text === '/start') {
-        sendTelegramMessage($chatId, "🍽 Olmazor Go ga xush kelibsiz!", ['inline_keyboard' => [[['text' => '🍽 Menu', 'web_app' => ['url' => WEBAPP_URL . '&tg_id=' . $chatId]]]], 'remove_keyboard' => true]);
+        logDebug("Normal start triggered");
+        sendTelegramMessage($chatId, "🍽 Olmazor Go ga xush kelibsiz!", [
+            'inline_keyboard' => [[['text' => '🍽 Menu', 'web_app' => ['url' => WEBAPP_URL . '&tg_id=' . $chatId]]]],
+            'remove_keyboard' => true
+        ]);
         return;
     }
 
     // Contact
     if (isset($message['contact'])) {
+        logDebug("Contact received from $chatId");
         $phone = $message['contact']['phone_number'];
         $sessionFile = getSessionFile($chatId);
         if (file_exists($sessionFile)) {
@@ -131,7 +142,14 @@ function processUpdate($update) {
             $sessionData['phone'] = $phone;
             $sessionData['step'] = 'address';
             file_put_contents($sessionFile, json_encode($sessionData));
-            sendTelegramMessage($chatId, "✅ Raqam: $phone\n\n📍 Manzilni yozing yoki joylashuvingizni yuboring:", ['keyboard' => [[['text' => '📍 Joylashuv', 'request_location' => true]]], 'resize_keyboard' => true, 'one_time_keyboard' => true]);
+            sendTelegramMessage($chatId, "✅ Raqam: $phone\n\n📍 Manzilni yozing yoki joylashuvingizni yuboring:", [
+                'keyboard' => [[['text' => '📍 Joylashuv', 'request_location' => true]]],
+                'resize_keyboard' => true,
+                'one_time_keyboard' => true
+            ]);
+        } else {
+            // Just welcome message if no session
+            sendTelegramMessage($chatId, "✅ Rahmat! Ro'yxatdan o'tdingiz. Menuni ochish uchun /start ni bosing.");
         }
         return;
     }
@@ -139,6 +157,7 @@ function processUpdate($update) {
     // Address/Comment
     $sessionFile = getSessionFile($chatId);
     if (file_exists($sessionFile)) {
+        logDebug("Session exists for $chatId, step: " . (json_decode(file_get_contents($sessionFile), true)['step'] ?? 'unknown'));
         $sessionData = json_decode(file_get_contents($sessionFile), true);
         if ($sessionData['step'] === 'address') {
             $address = isset($message['location']) ? "📍 GPS: {$message['location']['latitude']}, {$message['location']['longitude']}" : $text;
